@@ -506,13 +506,20 @@ BarWidget {
     anchorItem: root
     bar: root.bar
     open: root.pickerOpen
-    contentWidth: Style.space(280)
+    contentWidth: Style.space(296)
     contentHeight: styleColumn.implicitHeight + padding * 2
+
+    readonly property var styleChoices: [
+      { key: "elements", label: "Elemental Icons" },
+      { key: "alchemy",  label: "Alchemical Symbols" },
+      { key: "godai",    label: "Japanese Godai" },
+      { key: "wuxing",   label: "Chinese Wu Xing" }
+    ]
 
     ColumnLayout {
       id: styleColumn
       anchors.fill: parent
-      spacing: Style.space(8)
+      spacing: Style.space(6)
 
       Text {
         textFormat: Text.PlainText
@@ -521,38 +528,151 @@ BarWidget {
         font.family: Style.font.family
         font.pixelSize: Style.font.body
         font.bold: true
+        Layout.bottomMargin: Style.space(2)
       }
 
-      Button {
-        Layout.fillWidth: true
-        bordered: true
-        text: "󰈸 󰖌 󰌪 󰖝 󱐋   Elemental Icons"
-        selected: root.iconStyle === "elements"
-        onClicked: root.selectStyle("elements")
-      }
+      Repeater {
+        model: stylePopup.styleChoices
 
-      Button {
-        Layout.fillWidth: true
-        bordered: true
-        text: "🜂 🜄 🜃 🜁 ✧   Alchemical Symbols"
-        selected: root.iconStyle === "alchemy"
-        onClicked: root.selectStyle("alchemy")
-      }
+        Button {
+          id: choiceBtn
+          required property var modelData
+          readonly property string choiceKey: modelData.key
+          readonly property var packList: root.packs[choiceKey] || root.packs.elements
 
-      Button {
-        Layout.fillWidth: true
-        bordered: true
-        text: "地 水 火 風 空   Japanese Godai"
-        selected: root.iconStyle === "godai"
-        onClicked: root.selectStyle("godai")
-      }
+          Layout.fillWidth: true
+          Layout.preferredHeight: Style.space(32)
+          bordered: true
+          selected: root.iconStyle === choiceKey
+          onClicked: root.selectStyle(choiceKey)
 
-      Button {
-        Layout.fillWidth: true
-        bordered: true
-        text: "木 火 土 金 水   Chinese Wu Xing"
-        selected: root.iconStyle === "wuxing"
-        onClicked: root.selectStyle("wuxing")
+          RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: Style.space(10)
+            anchors.rightMargin: Style.space(10)
+            spacing: Style.space(10)
+
+            // Fixed-width 5-slot icon preview grid so all 4 rows align vertically and horizontally.
+            Row {
+              Layout.preferredWidth: 100
+              Layout.alignment: Qt.AlignVCenter
+              spacing: 4
+
+              Repeater {
+                model: choiceBtn.packList
+
+                Item {
+                  required property var modelData
+                  width: 16
+                  height: 16
+
+                  Text {
+                    visible: choiceBtn.choiceKey !== "alchemy"
+                    anchors.centerIn: parent
+                    textFormat: Text.PlainText
+                    text: modelData.icon
+                    color: modelData.color
+                    font.family: (choiceBtn.choiceKey === "godai" || choiceBtn.choiceKey === "wuxing")
+                      ? "Noto Sans CJK JP"
+                      : (root.bar ? root.bar.fontFamily : Style.font.family)
+                    font.weight: (choiceBtn.choiceKey === "godai" || choiceBtn.choiceKey === "wuxing")
+                      ? Font.DemiBold : Font.Normal
+                    font.pixelSize: Math.round(root.uniformIconSize * modelData.glyphScale)
+                    renderType: Text.CurveRendering
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                  }
+
+                  Canvas {
+                    visible: choiceBtn.choiceKey === "alchemy"
+                    width: 16
+                    height: 16
+                    anchors.centerIn: parent
+                    antialiasing: true
+                    property string kind: modelData.alchemyKind
+                    property color strokeColor: modelData.color
+
+                    onPaint: {
+                      var ctx = getContext("2d")
+                      ctx.reset()
+                      var targetSize = root.uniformIconSize
+                      var lw = 1.4
+                      var span = targetSize - lw
+                      var midX = width / 2
+                      var midY = height / 2
+                      var left = midX - span / 2
+                      var right = midX + span / 2
+                      var top = midY - span / 2
+                      var bottom = midY + span / 2
+
+                      ctx.strokeStyle = String(strokeColor)
+                      ctx.lineWidth = lw
+                      ctx.lineJoin = "round"
+                      ctx.lineCap = "round"
+
+                      if (kind === "fire" || kind === "air") {
+                        ctx.beginPath()
+                        ctx.moveTo(midX, top)
+                        ctx.lineTo(right, bottom)
+                        ctx.lineTo(left, bottom)
+                        ctx.closePath()
+                        ctx.stroke()
+                        if (kind === "air") {
+                          var barY = top + span * 0.48
+                          ctx.beginPath()
+                          ctx.moveTo(left + span * 0.1, barY)
+                          ctx.lineTo(right - span * 0.1, barY)
+                          ctx.stroke()
+                        }
+                      } else if (kind === "water" || kind === "earth") {
+                        ctx.beginPath()
+                        ctx.moveTo(left, top)
+                        ctx.lineTo(right, top)
+                        ctx.lineTo(midX, bottom)
+                        ctx.closePath()
+                        ctx.stroke()
+                        if (kind === "earth") {
+                          var eBarY = top + span * 0.52
+                          ctx.beginPath()
+                          ctx.moveTo(left + span * 0.1, eBarY)
+                          ctx.lineTo(right - span * 0.1, eBarY)
+                          ctx.stroke()
+                        }
+                      } else {
+                        var inner = span * 0.22
+                        ctx.beginPath()
+                        ctx.moveTo(midX, top)
+                        ctx.lineTo(midX + inner, midY - inner)
+                        ctx.lineTo(right, midY)
+                        ctx.lineTo(midX + inner, midY + inner)
+                        ctx.lineTo(midX, bottom)
+                        ctx.lineTo(midX - inner, midY + inner)
+                        ctx.lineTo(left, midY)
+                        ctx.lineTo(midX - inner, midY - inner)
+                        ctx.closePath()
+                        ctx.stroke()
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
+            // Left-aligned style label starting at the exact same column across all 4 rows.
+            Text {
+              Layout.fillWidth: true
+              Layout.alignment: Qt.AlignVCenter
+              textFormat: Text.PlainText
+              text: choiceBtn.modelData.label
+              color: Color.foreground
+              font.family: Style.font.family
+              font.pixelSize: Style.font.body
+              horizontalAlignment: Text.AlignLeft
+              verticalAlignment: Text.AlignVCenter
+              elide: Text.ElideRight
+            }
+          }
+        }
       }
     }
   }
