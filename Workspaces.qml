@@ -132,11 +132,11 @@ BarWidget {
     }
 
     // 2. Domain/source match against PWA class or browser tab title (e.g., "messages.google.com" -> "messages")
-    var browserRe = /(brave|chrome|chromium|firefox|zen|vivaldi|edge|helium)/
+    var browserRe = /^(brave|chrome|chromium|firefox|zen|vivaldi|edge|helium)/
     var genericWords = { www: 1, app: 1, web: 1, mail: 1, google: 1, com: 1, org: 1, net: 1, io: 1, co: 1, dev: 1, ai: 1 }
 
     if (source.indexOf(".") > 0) {
-      // Check if a standalone PWA window class contains the source host
+      // 2a. Check if a standalone PWA window class contains the exact source host (e.g. "brave-discord.com__...")
       for (i = 0; i < list.length; i++) {
         if (!list[i].workspace) continue
         ipc = list[i].lastIpcObject
@@ -144,7 +144,7 @@ BarWidget {
         if (wmClass.indexOf(source) >= 0) return list[i].workspace.id
       }
 
-      // Check browser window titles for brand keywords from the source domain
+      // 2b. Check non-PWA browser window titles for brand keywords from the source domain
       var parts = source.split(".")
       for (var p = 0; p < parts.length; p++) {
         var brand = parts[p]
@@ -153,6 +153,8 @@ BarWidget {
           if (!list[i].workspace) continue
           ipc = list[i].lastIpcObject
           wmClass = String((ipc && ipc["class"]) || (list[i].wayland && list[i].wayland.appId) || "").toLowerCase()
+          // Skip domain-specific PWA windows (which have "__" in their class) when matching browser tabs
+          if (wmClass.indexOf("__") >= 0) continue
           title = String(list[i].title || (ipc && ipc.title) || "").toLowerCase()
           if (browserRe.test(wmClass) && title.indexOf(brand) >= 0) {
             return list[i].workspace.id
@@ -161,22 +163,31 @@ BarWidget {
       }
     }
 
-    // 3. Fallback: Match by application name (e.g., "Brave Origin" -> "brave", "Slack" -> "slack"),
-    // preferring windows on inactive workspaces so background tabs on another workspace blink that workspace.
+    // 3. Fallback: Match the actual application window (excluding unrelated PWAs with "__" in wmClass).
+    // For example, "Brave Origin" -> "brave-origin", "Slack" -> "slack".
+    var appHyphen = app.replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
     var appToken = app.split(/[\s-_]+/)[0].replace(/[^a-z0-9]/g, "")
     if (appToken.length >= 3) {
-      var fallbackWs = -1
+      var exactCandidates = []
+      var prefixCandidates = []
       for (i = 0; i < list.length; i++) {
         if (!list[i].workspace) continue
-        wsId = list[i].workspace.id
         ipc = list[i].lastIpcObject
         wmClass = String((ipc && ipc["class"]) || (list[i].wayland && list[i].wayland.appId) || "").toLowerCase()
-        if (wmClass.indexOf(appToken) >= 0) {
-          if (wsId !== activeWs && wsId > 0) return wsId
-          if (fallbackWs === -1) fallbackWs = wsId
+        // Never match a domain-specific PWA (like brave-discord.com__...) as a generic browser fallback
+        if (wmClass.indexOf("__") >= 0) continue
+        var focusOrder = Number(ipc && ipc.focusHistoryID !== undefined ? ipc.focusHistoryID : 9999)
+        if (wmClass === appHyphen || wmClass === appToken) {
+          exactCandidates.push({ wsId: list[i].workspace.id, focusOrder: focusOrder })
+        } else if (wmClass.indexOf(appToken) >= 0) {
+          prefixCandidates.push({ wsId: list[i].workspace.id, focusOrder: focusOrder })
         }
       }
-      if (fallbackWs > 0) return fallbackWs
+      var pool = exactCandidates.length > 0 ? exactCandidates : prefixCandidates
+      if (pool.length > 0) {
+        pool.sort(function(a, b) { return a.focusOrder - b.focusOrder })
+        return pool[0].wsId
+      }
     }
 
     return -1
