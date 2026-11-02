@@ -666,7 +666,7 @@ BarWidget {
         }
         onWheelMoved: function(delta) { root.scrollWorkspaces(delta) }
 
-        readonly property real blinkScale: notified ? (root.blinkPhase ? 1.12 : 0.94) : 1.0
+        property real blinkScale: notified ? (root.blinkPhase ? 1.12 : 0.94) : 1.0
         Behavior on blinkScale {
           NumberAnimation { duration: Style.duration(240); easing.type: Easing.OutCubic }
         }
