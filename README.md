@@ -2,6 +2,8 @@
 
 A Hyprland workspace indicator bar widget for [Omarchy](https://omarchy.org/) that represents your workspaces with the symbols and elemental colors of the **Five Elements** (**Fire**, **Water**, **Earth**, **Air**, and **Aether**).
 
+![Preview](preview.png)
+
 ## Element & Color Map
 
 | Workspace | Element | Nerd Font Icon | Hex Color |
@@ -19,6 +21,11 @@ A Hyprland workspace indicator bar widget for [Omarchy](https://omarchy.org/) th
 - **Empty Workspace:** Rendered in the muted bar foreground color at `0.35` opacity.
 - **Full Omarchy Multi-Monitor & Layout Support:** Preserves per-monitor workspace blocks (1–10 per monitor), scroll-wheel workspace switching, and clicking the active workspace to cycle Hyprland layouts (`dwindle` / `scrolling` / `floating`).
 - **Hover Tooltip:** Shows the workspace number, element name, and (when focused) the active layout mode.
+
+## Dependencies
+
+- **Omarchy Shell** (`omarchy-shell`) and **Hyprland** (included with Omarchy).
+- **Nerd Font** (included with Omarchy, e.g., `JetBrainsMono Nerd Font`). No external packages or network access required.
 
 ## Installation
 
