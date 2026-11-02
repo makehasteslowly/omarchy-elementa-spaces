@@ -80,6 +80,8 @@ BarWidget {
   property var notifiedWindows: ({})
   // ackWindowUnread[normalizedAddress] = last acknowledged unread count on that window
   property var ackWindowUnread: ({})
+  // windowSeenTitles[normalizedAddress] = array of lowercase titles seen in that window (tracks background tabs)
+  property var windowSeenTitles: ({})
   property var seenNotificationKeys: ({})
   property bool liveNotifsInitialized: false
   property bool blinkPhase: false
@@ -204,8 +206,21 @@ BarWidget {
     return null
   }
 
+  function recordWindowTitle(addrRaw, titleRaw) {
+    var normAddr = root.normalizeAddress(addrRaw)
+    var t = String(titleRaw || "").trim().toLowerCase()
+    if (!normAddr || !t || t.indexOf("new tab") === 0) return
+    var prev = root.windowSeenTitles[normAddr] ? root.windowSeenTitles[normAddr].slice() : []
+    var idx = prev.indexOf(t)
+    if (idx >= 0) prev.splice(idx, 1)
+    prev.unshift(t)
+    if (prev.length > 24) prev.length = 24
+    var nextMap = Object.assign({}, root.windowSeenTitles)
+    nextMap[normAddr] = prev
+    root.windowSeenTitles = nextMap
+  }
+
   function checkWindowTitleNotification(addrRaw, titleRaw) {
-    if (!root.showNotifications) return
     var normAddr = root.normalizeAddress(addrRaw)
     if (!normAddr) return
 
@@ -224,6 +239,8 @@ BarWidget {
     var wsId = targetToplevel.workspace.id
     var activeId = root.activeWorkspaceId()
     var title = String(titleRaw !== undefined ? titleRaw : (targetToplevel.title || (targetToplevel.lastIpcObject && targetToplevel.lastIpcObject.title) || ""))
+    root.recordWindowTitle(normAddr, title)
+    if (!root.showNotifications) return
     var info = root.extractTitleNotification(title)
 
     if (!info) {
@@ -430,6 +447,42 @@ BarWidget {
             return a.focusOrder - b.focusOrder
           })
           return titleCandidates[0]
+        }
+      }
+
+      // 2c. Check remembered tab titles seen earlier in each browser window (handles background tabs behind "New Tab")
+      var historyCandidates = []
+      for (var hk = 0; hk < keywords.length; hk++) {
+        var hkw = keywords[hk]
+        for (i = 0; i < list.length; i++) {
+          if (!list[i].workspace) continue
+          ipc = list[i].lastIpcObject
+          wmClass = String((ipc && ipc["class"]) || (list[i].wayland && list[i].wayland.appId) || "").toLowerCase()
+          if (wmClass.indexOf("__") >= 0 || !browserRe.test(wmClass)) continue
+          addr = String(list[i].address || (ipc && ipc.address) || "")
+          var normA = root.normalizeAddress(addr)
+          var seenList = root.windowSeenTitles[normA] || []
+          for (var sIdx = 0; sIdx < seenList.length; sIdx++) {
+            if (seenList[sIdx].indexOf(hkw) >= 0) {
+              historyCandidates.push({
+                wsId: list[i].workspace.id,
+                address: addr,
+                inactive: list[i].workspace.id !== activeId ? 0 : 1,
+                recency: sIdx,
+                focusOrder: Number(ipc && ipc.focusHistoryID !== undefined ? ipc.focusHistoryID : 9999),
+                label: root.formatNotificationLabel(appRaw, sourceRaw, wmClass)
+              })
+              break
+            }
+          }
+        }
+        if (historyCandidates.length > 0) {
+          historyCandidates.sort(function(a, b) {
+            if (a.inactive !== b.inactive) return a.inactive - b.inactive
+            if (a.recency !== b.recency) return a.recency - b.recency
+            return a.focusOrder - b.focusOrder
+          })
+          return historyCandidates[0]
         }
       }
     }
