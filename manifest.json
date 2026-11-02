@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "elemental-workspace-indicator",
   "name": "Elemental Workspace Indicator",
-  "version": "1.6.2",
+  "version": "1.7.0",
   "author": "makehasteslowly",
   "license": "MIT",
   "homepage": "https://github.com/makehasteslowly/omarchy-five-elements-workspaces",
@@ -21,6 +21,7 @@
     "defaultSection": "left",
     "defaults": {
       "style": "elements",
+      "colorMode": "elemental",
       "previewSize": "medium",
       "notificationSpeed": "fast"
     },
@@ -47,6 +48,27 @@
           {
             "value": "wuxing",
             "label": "木  Chinese Wu Xing (木 火 土 金 水)"
+          }
+        ]
+      },
+      {
+        "key": "colorMode",
+        "type": "enum",
+        "label": "Icon Colors",
+        "description": "Choose between Soft elemental colors, Bold high-saturation elemental colors, or the active Omarchy theme's own colors.",
+        "defaultValue": "elemental",
+        "options": [
+          {
+            "value": "elemental",
+            "label": "Soft Elemental (Pastel 5-element palette)"
+          },
+          {
+            "value": "bold",
+            "label": "Bold Elemental (High-saturation vivid 5-element palette)"
+          },
+          {
+            "value": "theme",
+            "label": "Theme Colors (Follow active Omarchy theme)"
           }
         ]
       },

@@ -7,11 +7,11 @@ A Hyprland workspace indicator bar widget for [Omarchy](https://omarchy.org/) th
 3. **Japanese Godai (`godai`)** — `地 水 火 風 空` (Earth, Water, Fire, Wind, Void)
 4. **Chinese Wu Xing (`wuxing`)** — `木 火 土 金 水` (Wood, Fire, Earth, Metal, Water)
 
-### Symbol Styles & Live Floating Preview
+### Symbol Styles, Live Floating Preview & Right-Click Settings
 
-| 4 Symbol Packs (`12px` Uniform Height) | Live Floating Workspace Preview (on Hover) |
-| :---: | :---: |
-| ![Symbol Packs](preview.png) | ![Floating Workspace Preview](preview-window.png) |
+| 4 Symbol Packs (`12px` Uniform Height) | Live Floating Workspace Preview (on Hover) | Right-Click Settings Popup |
+| :---: | :---: | :---: |
+| ![Symbol Packs](preview.png) | ![Floating Workspace Preview](preview-window.png) | ![Right-Click Settings Popup](preview-menu.png) |
 
 ## Interactive Controls
 
@@ -21,7 +21,7 @@ A Hyprland workspace indicator bar widget for [Omarchy](https://omarchy.org/) th
 | **Click** a window card in preview | Switches directly to that workspace and focuses that exact window |
 | **Left-Click** an inactive workspace | Switches to that workspace (and clears any active notification blink) |
 | **Left-Click** the active workspace | Cycles the workspace's Hyprland layout (`dwindle` → `scrolling` → `floating`) |
-| **Right-Click** any workspace icon | Cycles the symbol style and opens the **Style, Preview Size (`Off` / `S` / `M` / `L`), and Notif Blink (`Off` / `Slow` / `Med` / `Fast`)** popup |
+| **Right-Click** any workspace icon | Cycles the symbol style and opens the **Style, Icon Colors (`Soft` / `Bold` / `Theme`), Preview Size (`Off` / `S` / `M` / `L`), and Notif Blink (`Off` / `Slow` / `Med` / `Fast`)** popup |
 | **Scroll Wheel** over widget | Scrolls through workspaces on the current monitor |
 
 ## Notification Blink (`Notif Blink`) & Preview Highlight
@@ -82,9 +82,10 @@ Never miss a message on an inactive workspace:
 ## Features
 
 - **4 Selectable Symbol Packs (Uniform `12px` Optical Height):** All 4 packs (`elements`, `alchemy`, `godai`, `wuxing`) are optically calibrated to an identical `12px` height and shared vertical centerline.
+- **3 Selectable Icon Color Modes (`Soft` · `Bold` · `Theme`) + Auto-Adaptive Contrast:** Choose between **Soft** pastel elemental colors, **Bold** high-saturation vivid elemental colors, or **Theme** (follows your active Omarchy theme's `bar.active` / `bar.text` colors). Both elemental palettes automatically adapt their luminance and contrast on light, dark, and colored theme bars.
 - **Notif Blink (`Off` / `Slow` / `Med` / `Fast`):** When an app, standalone PWA, or browser tab (including web apps that notify via tab title badges like `(1) Facebook` or `"messaged you"`) on an inactive workspace triggers a notification or Wayland urgency signal, that workspace's elemental icon on the bar and the notifying window card inside the hover preview smoothly pulse in brightness at your chosen speed (`Slow`, `Med`, `Fast`, or `Off`) until you visit that workspace.
 - **Resizable Live Floating Workspace Preview (on Hover):** Hovering over any workspace indicator opens a floating preview card accented in that element's color, showing live Wayland window thumbnails (`ScreencopyView`), a 360° active-window elemental border (or pulsing notification border + `󰂚` title highlight for notifying windows), and window titles. Click any window card in the preview to jump directly to that window, or choose your preferred preview size (`Off`, `Small`, `Medium`, `Large`) from the right-click menu.
-- **Style, Preview Size & Notif Blink Selector:** Automatically opens a selector popup on first install when no style is stored in `shell.json`, and you can **right-click** any workspace indicator on the bar at any time to switch between the 4 styles, resize the floating preview (`Off` / `S` / `M` / `L`), or adjust **Notif Blink** (`Off` / `Slow` / `Med` / `Fast`).
+- **Style, Icon Colors, Preview Size & Notif Blink Selector:** Automatically opens a selector popup on first install when no style is stored in `shell.json`, and you can **right-click** any workspace indicator on the bar at any time to switch between the 4 styles, 3 icon color modes (`Soft` / `Bold` / `Theme`), preview sizes (`Off` / `S` / `M` / `L`), or **Notif Blink** (`Off` / `Slow` / `Med` / `Fast`).
 - **Focused (Active) Workspace:** Rendered at full brightness (`1.0` opacity) in its elemental color with an animated elemental underline bar.
 - **Occupied Workspace:** Rendered in its elemental color at `0.78` opacity when windows are open on that workspace.
 - **Empty Workspace:** Rendered in its muted elemental tint at `0.40` opacity.
@@ -117,6 +118,11 @@ omarchy bar set elemental-workspace-indicator style godai
 
 # Chinese Wu Xing (木 火 土 金 水)
 omarchy bar set elemental-workspace-indicator style wuxing
+
+# Set the icon color mode (elemental = Soft, bold = Bold, theme = Active Omarchy Theme)
+omarchy bar set elemental-workspace-indicator colorMode elemental
+omarchy bar set elemental-workspace-indicator colorMode bold
+omarchy bar set elemental-workspace-indicator colorMode theme
 
 # Set the floating hover preview window size (off, small, medium, large)
 omarchy bar set elemental-workspace-indicator previewSize small

@@ -25,6 +25,37 @@ BarWidget {
     return "elements"
   }
 
+  // Icon color mode setting: "elemental" (Soft) | "bold" (Vivid) | "theme" (Active Omarchy theme)
+  property string localColorModeOverride: ""
+  readonly property string configuredColorMode: {
+    if (root.settings && root.settings.colorMode !== undefined && root.settings.colorMode !== null) {
+      var cm = String(root.settings.colorMode).toLowerCase()
+      if (cm === "theme" || cm === "bold" || cm === "elemental") return cm
+      if (cm === "soft") return "elemental"
+    }
+    return "elemental"
+  }
+  readonly property string colorMode: root.localColorModeOverride !== ""
+    ? root.localColorModeOverride
+    : root.configuredColorMode
+  readonly property bool useThemeColors: root.colorMode === "theme"
+  readonly property bool useBoldColors: root.colorMode === "bold"
+
+  // Live bar & popup background luminance detection for automatic light/dark/colored theme contrast
+  readonly property color effectiveBarBg: {
+    var bg = (Color.bar && Color.bar.background !== undefined) ? Color.bar.background : Color.background
+    return (bg.a !== undefined && bg.a < 0.25) ? Color.background : bg
+  }
+  readonly property real barLuminance: 0.2126 * root.effectiveBarBg.r + 0.7152 * root.effectiveBarBg.g + 0.0722 * root.effectiveBarBg.b
+  readonly property bool isLightBar: root.barLuminance > 0.48
+
+  readonly property color effectivePopupBg: {
+    var pbg = (Color.popups && Color.popups.background !== undefined) ? Color.popups.background : Color.background
+    return (pbg.a !== undefined && pbg.a < 0.25) ? Color.background : pbg
+  }
+  readonly property real popupLuminance: 0.2126 * root.effectivePopupBg.r + 0.7152 * root.effectivePopupBg.g + 0.0722 * root.effectivePopupBg.b
+  readonly property bool isLightPopup: root.popupLuminance > 0.48
+
   // Floating hover preview size setting: "off" | "small" | "medium" | "large" (defaults to "medium")
   property string localPreviewSizeOverride: ""
   readonly property string configuredPreviewSize: {
@@ -599,6 +630,14 @@ BarWidget {
     }
   }
 
+  function selectColorMode(nextMode) {
+    var normalized = (nextMode === "theme" || nextMode === "bold") ? nextMode : "elemental"
+    root.localColorModeOverride = normalized
+    if (root.bar) {
+      root.bar.run("omarchy-bar set " + Util.shellQuote(root.pluginId) + " colorMode " + Util.shellQuote(normalized))
+    }
+  }
+
   function selectPreviewSize(nextSize) {
     var normalized = (nextSize === "off" || nextSize === "small" || nextSize === "large")
       ? nextSize : "medium"
@@ -626,6 +665,10 @@ BarWidget {
     if (root.configuredStyle !== "") {
       root.localStyleOverride = ""
     }
+  }
+
+  onConfiguredColorModeChanged: {
+    root.localColorModeOverride = ""
   }
 
   onConfiguredPreviewSizeChanged: {
@@ -762,39 +805,81 @@ BarWidget {
 
   readonly property var packs: ({
     elements: [
-      { icon: "󰈸", glyphScale: 1.29, alchemyKind: "fire",   name: "Fire",   color: "#FF6B35" },
-      { icon: "󰖌", glyphScale: 1.38, alchemyKind: "water",  name: "Water",  color: "#38BDF8" },
-      { icon: "󰌪", glyphScale: 1.24, alchemyKind: "earth",  name: "Earth",  color: "#4ADE80" },
-      { icon: "󰖝", glyphScale: 1.19, alchemyKind: "air",    name: "Air",    color: "#67E8F9" },
-      { icon: "󱐋", glyphScale: 1.10, alchemyKind: "aether", name: "Aether", color: "#C084FC" }
+      { icon: "󰈸", glyphScale: 1.29, alchemyKind: "fire",   name: "Fire",   color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
+      { icon: "󰖌", glyphScale: 1.38, alchemyKind: "water",  name: "Water",  color: "#38BDF8", boldColor: "#0088FF", lightColor: "#0284C7", boldLightColor: "#0055D4" },
+      { icon: "󰌪", glyphScale: 1.24, alchemyKind: "earth",  name: "Earth",  color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
+      { icon: "󰖝", glyphScale: 1.19, alchemyKind: "air",    name: "Air",    color: "#67E8F9", boldColor: "#00F0FF", lightColor: "#0E7490", boldLightColor: "#007A8C" },
+      { icon: "󱐋", glyphScale: 1.10, alchemyKind: "aether", name: "Aether", color: "#C084FC", boldColor: "#B829FF", lightColor: "#7E22CE", boldLightColor: "#6B00D7" }
     ],
     alchemy: [
-      { icon: "🜂", glyphScale: 1.0,  alchemyKind: "fire",   name: "Fire (🜂)",   color: "#FF6B35" },
-      { icon: "🜄", glyphScale: 1.0,  alchemyKind: "water",  name: "Water (🜄)",  color: "#38BDF8" },
-      { icon: "🜃", glyphScale: 1.0,  alchemyKind: "earth",  name: "Earth (🜃)",  color: "#4ADE80" },
-      { icon: "🜁", glyphScale: 1.0,  alchemyKind: "air",    name: "Air (🜁)",    color: "#67E8F9" },
-      { icon: "✧",  glyphScale: 1.0,  alchemyKind: "aether", name: "Aether (✧)", color: "#C084FC" }
+      { icon: "🜂", glyphScale: 1.0,  alchemyKind: "fire",   name: "Fire (🜂)",   color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
+      { icon: "🜄", glyphScale: 1.0,  alchemyKind: "water",  name: "Water (🜄)",  color: "#38BDF8", boldColor: "#0088FF", lightColor: "#0284C7", boldLightColor: "#0055D4" },
+      { icon: "🜃", glyphScale: 1.0,  alchemyKind: "earth",  name: "Earth (🜃)",  color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
+      { icon: "🜁", glyphScale: 1.0,  alchemyKind: "air",    name: "Air (🜁)",    color: "#67E8F9", boldColor: "#00F0FF", lightColor: "#0E7490", boldLightColor: "#007A8C" },
+      { icon: "✧",  glyphScale: 1.0,  alchemyKind: "aether", name: "Aether (✧)", color: "#C084FC", boldColor: "#B829FF", lightColor: "#7E22CE", boldLightColor: "#6B00D7" }
     ],
     godai: [
-      { icon: "地", glyphScale: 1.09, alchemyKind: "earth",  name: "Chi · Earth (地)", color: "#4ADE80" },
-      { icon: "水", glyphScale: 1.07, alchemyKind: "water",  name: "Sui · Water (水)", color: "#38BDF8" },
-      { icon: "火", glyphScale: 1.09, alchemyKind: "fire",   name: "Ka · Fire (火)",   color: "#FF6B35" },
-      { icon: "風", glyphScale: 1.11, alchemyKind: "air",    name: "Fū · Wind (風)",   color: "#67E8F9" },
-      { icon: "空", glyphScale: 1.10, alchemyKind: "aether", name: "Kū · Void (空)",   color: "#C084FC" }
+      { icon: "地", glyphScale: 1.09, alchemyKind: "earth",  name: "Chi · Earth (地)", color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
+      { icon: "水", glyphScale: 1.07, alchemyKind: "water",  name: "Sui · Water (水)", color: "#38BDF8", boldColor: "#0088FF", lightColor: "#0284C7", boldLightColor: "#0055D4" },
+      { icon: "火", glyphScale: 1.09, alchemyKind: "fire",   name: "Ka · Fire (火)",   color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
+      { icon: "風", glyphScale: 1.11, alchemyKind: "air",    name: "Fū · Wind (風)",   color: "#67E8F9", boldColor: "#00F0FF", lightColor: "#0E7490", boldLightColor: "#007A8C" },
+      { icon: "空", glyphScale: 1.10, alchemyKind: "aether", name: "Kū · Void (空)",   color: "#C084FC", boldColor: "#B829FF", lightColor: "#7E22CE", boldLightColor: "#6B00D7" }
     ],
     wuxing: [
-      { icon: "木", glyphScale: 1.07, alchemyKind: "earth",  name: "Mù · Wood (木)",   color: "#4ADE80" },
-      { icon: "火", glyphScale: 1.09, alchemyKind: "fire",   name: "Huǒ · Fire (火)",  color: "#FF6B35" },
-      { icon: "土", glyphScale: 1.11, alchemyKind: "earth",  name: "Tǔ · Earth (土)",  color: "#FBBF24" },
-      { icon: "金", glyphScale: 1.09, alchemyKind: "air",    name: "Jīn · Metal (金)", color: "#E2E8F0" },
-      { icon: "水", glyphScale: 1.07, alchemyKind: "water",  name: "Shuǐ · Water (水)", color: "#38BDF8" }
+      { icon: "木", glyphScale: 1.07, alchemyKind: "earth",  name: "Mù · Wood (木)",   color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
+      { icon: "火", glyphScale: 1.09, alchemyKind: "fire",   name: "Huǒ · Fire (火)",  color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
+      { icon: "土", glyphScale: 1.11, alchemyKind: "earth",  name: "Tǔ · Earth (土)",  color: "#FBBF24", boldColor: "#FFB800", lightColor: "#B45309", boldLightColor: "#9A3412" },
+      { icon: "金", glyphScale: 1.09, alchemyKind: "air",    name: "Jīn · Metal (金)", color: "#E2E8F0", boldColor: "#FFFFFF", lightColor: "#334155", boldLightColor: "#0F172A" },
+      { icon: "水", glyphScale: 1.07, alchemyKind: "water",  name: "Shuǐ · Water (水)", color: "#38BDF8", boldColor: "#0088FF", lightColor: "#0284C7", boldLightColor: "#0055D4" }
     ]
   })
 
-  function elementForSlot(slot, styleName) {
+  function resolveElementColor(item, forPopup, isHighlighted) {
+    if (!item) return Color.foreground
+    var onLight = forPopup ? root.isLightPopup : root.isLightBar
+    var bg = forPopup ? root.effectivePopupBg : root.effectiveBarBg
+
+    if (root.useThemeColors) {
+      if (isHighlighted) {
+        var act = (!forPopup && Color.bar && Color.bar.active !== undefined) ? Color.bar.active : Color.accent
+        return act
+      }
+      return (!forPopup && Color.bar && Color.bar.text !== undefined) ? Color.bar.text : Color.foreground
+    }
+
+    var hex
+    if (root.useBoldColors) {
+      hex = onLight ? (item.boldLightColor || item.lightColor || item.color) : (item.boldColor || item.color)
+    } else {
+      hex = onLight ? (item.lightColor || item.color) : item.color
+    }
+    var c = Qt.color(hex)
+    var cLum = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b
+    var bgLum = onLight ? root.popupLuminance : root.barLuminance
+    if (!forPopup) bgLum = root.barLuminance
+    var lumDiff = Math.abs(cLum - bgLum)
+    var rgbDist = Math.sqrt(Math.pow(c.r - bg.r, 2) + Math.pow(c.g - bg.g, 2) + Math.pow(c.b - bg.b, 2))
+
+    // If a custom colored theme background is close to this element's color, boost contrast automatically
+    if (lumDiff < 0.22 && rgbDist < 0.42) {
+      return onLight ? Qt.darker(c, 1.55) : Qt.lighter(c, 1.45)
+    }
+    return c
+  }
+
+  function elementForSlot(slot, styleName, forPopup, isHighlighted) {
     var list = root.packs[styleName] || root.packs.elements
     var idx = ((slot - 1) % list.length + list.length) % list.length
-    return list[idx]
+    var raw = list[idx]
+    return {
+      icon: raw.icon,
+      glyphScale: raw.glyphScale,
+      alchemyKind: raw.alchemyKind,
+      name: raw.name,
+      color: root.resolveElementColor(raw, Boolean(forPopup), isHighlighted !== false),
+      rawColor: raw.color,
+      lightColor: raw.lightColor || raw.color
+    }
   }
 
   property string activeMode: "dwindle"
@@ -1002,7 +1087,7 @@ BarWidget {
         readonly property bool shown: root.monitor !== null && root.monitor.activeWorkspace !== null && root.monitor.activeWorkspace.id === modelData
         readonly property bool notified: !shown && root.isWorkspaceNotified(modelData)
         readonly property int slot: root.slotOf(modelData)
-        readonly property var element: root.elementForSlot(slot, root.iconStyle)
+        readonly property var element: root.elementForSlot(slot, root.iconStyle, false, shown || notified)
         readonly property bool useAlchemy: root.iconStyle === "alchemy"
         readonly property bool isCjk: root.iconStyle === "godai" || root.iconStyle === "wuxing"
         readonly property bool firstGuest: root.blockOf(modelData) !== root.block && index > 0 && root.blockOf(root.workspaceIds()[index - 1]) === root.block
@@ -1018,7 +1103,11 @@ BarWidget {
         active: shown
         activeColor: element.color
         foreground: element.color
-        opacity: (shown || notified) ? 1.0 : (occupied ? 0.78 : 0.4)
+        opacity: (shown || notified)
+          ? 1.0
+          : (occupied
+            ? (root.useBoldColors ? 0.90 : (root.isLightBar ? 0.85 : 0.78))
+            : (root.useBoldColors ? 0.58 : (root.isLightBar ? 0.50 : 0.42)))
         // Only show plain bar tooltip when floating preview is disabled
         tooltipText: root.showPreview ? "" : (shown
           ? (slot + " · " + element.name + " (" + root.activeMode + ") · Right-click: style")
@@ -1078,9 +1167,11 @@ BarWidget {
 
           property string kind: wsBtn.element.alchemyKind
           property color strokeColor: wsBtn.element.color
+          property real strokeWeight: root.useBoldColors ? 1.65 : 1.4
 
           onKindChanged: requestPaint()
           onStrokeColorChanged: requestPaint()
+          onStrokeWeightChanged: requestPaint()
           onWidthChanged: requestPaint()
           onHeightChanged: requestPaint()
 
@@ -1090,7 +1181,7 @@ BarWidget {
             var w = width
             var h = height
             var targetSize = root.uniformIconSize
-            var lw = 1.4
+            var lw = strokeWeight
             var span = targetSize - lw
             var midX = w / 2
             var midY = h / 2
@@ -1184,7 +1275,7 @@ BarWidget {
 
     readonly property int wsId: root.hoveredWorkspaceId > 0 ? root.hoveredWorkspaceId : 1
     readonly property int slot: root.slotOf(wsId)
-    readonly property var element: root.elementForSlot(slot, root.iconStyle)
+    readonly property var element: root.elementForSlot(slot, root.iconStyle, true, true)
     readonly property var workspaceObj: root.workspaceById(wsId)
     readonly property var windowList: {
       if (!workspaceObj || !workspaceObj.toplevels) return []
@@ -1364,9 +1455,9 @@ BarWidget {
         Layout.fillWidth: true
         Layout.preferredHeight: previewPopup.emptyH
         radius: Math.max(4, Style.cornerRadius - 2)
-        color: Qt.rgba(1, 1, 1, emptyMouse.containsMouse ? 0.08 : 0.04)
+        color: Qt.alpha(Color.foreground, emptyMouse.containsMouse ? 0.09 : 0.04)
         border.width: 1
-        border.color: emptyMouse.containsMouse ? previewPopup.element.color : Qt.rgba(1, 1, 1, 0.08)
+        border.color: emptyMouse.containsMouse ? previewPopup.element.color : Qt.alpha(Color.foreground, 0.14)
 
         Behavior on color { ColorAnimation { duration: Style.duration(140) } }
         Behavior on border.color { ColorAnimation { duration: Style.duration(140) } }
@@ -1437,7 +1528,7 @@ BarWidget {
             Layout.preferredWidth: previewPopup.cardThumbW
             Layout.preferredHeight: previewPopup.cardThumbH
             radius: Math.max(4, Style.cornerRadius - 2)
-            color: Qt.rgba(0, 0, 0, 0.28)
+            color: root.isLightPopup ? Qt.alpha(Color.foreground, 0.06) : Qt.rgba(0, 0, 0, 0.28)
             border.width: 0
             clip: true
 
@@ -1497,9 +1588,9 @@ BarWidget {
               anchors.rightMargin: winCard.strokeW
               anchors.bottomMargin: winCard.strokeW
               height: Style.space(24)
-              color: winMouse.containsMouse
-                ? Qt.rgba(0, 0, 0, 0.65)
-                : Qt.rgba(0, 0, 0, 0.48)
+              color: root.isLightPopup
+                ? Qt.alpha(Color.foreground, winMouse.containsMouse ? 0.14 : 0.08)
+                : (winMouse.containsMouse ? Qt.rgba(0, 0, 0, 0.65) : Qt.rgba(0, 0, 0, 0.48))
 
               RowLayout {
                 anchors.fill: parent
@@ -1555,7 +1646,7 @@ BarWidget {
                   ? Qt.alpha(Qt.color(previewPopup.element.color), root.blinkAlpha)
                   : (winCard.winActive
                     ? Qt.alpha(Qt.color(previewPopup.element.color), 0.78)
-                    : Qt.rgba(1, 1, 1, 0.16)))
+                    : Qt.alpha(Color.foreground, 0.18)))
             }
 
             MouseArea {
@@ -1590,7 +1681,7 @@ BarWidget {
     anchorItem: root
     bar: root.bar
     open: root.pickerOpen
-    contentWidth: Style.space(324)
+    contentWidth: Style.space(292)
     contentHeight: styleColumn.implicitHeight + padding * 2
 
     readonly property var styleChoices: [
@@ -1655,7 +1746,7 @@ BarWidget {
                     anchors.centerIn: parent
                     textFormat: Text.PlainText
                     text: modelData.icon
-                    color: modelData.color
+                    color: root.resolveElementColor(modelData, true, false)
                     font.family: (choiceBtn.choiceKey === "godai" || choiceBtn.choiceKey === "wuxing")
                       ? "Noto Sans CJK JP"
                       : (root.bar ? root.bar.fontFamily : Style.font.family)
@@ -1674,7 +1765,8 @@ BarWidget {
                     anchors.centerIn: parent
                     antialiasing: true
                     property string kind: modelData.alchemyKind
-                    property color strokeColor: modelData.color
+                    property color strokeColor: root.resolveElementColor(modelData, true, false)
+                    onStrokeColorChanged: requestPaint()
 
                     onPaint: {
                       var ctx = getContext("2d")
@@ -1759,7 +1851,7 @@ BarWidget {
         }
       }
 
-      // Divider & Preview Size selector (Off / S / M / L)
+      // Divider & Icon Colors / Preview Size / Notif Blink selectors
       Rectangle {
         Layout.fillWidth: true
         Layout.preferredHeight: 1
@@ -1771,16 +1863,52 @@ BarWidget {
 
       RowLayout {
         Layout.fillWidth: true
-        spacing: Style.space(6)
+        spacing: Style.space(4)
 
         Text {
-          Layout.fillWidth: true
+          Layout.preferredWidth: Style.space(102)
+          Layout.alignment: Qt.AlignVCenter
+          textFormat: Text.PlainText
+          text: "Icon Colors"
+          color: Color.foreground
+          font.family: Style.font.family
+          font.pixelSize: Style.font.body
+          elide: Text.ElideRight
+        }
+
+        Repeater {
+          model: [
+            { key: "elemental", label: "Soft" },
+            { key: "bold",      label: "Bold" },
+            { key: "theme",     label: "Theme" }
+          ]
+
+          Button {
+            required property var modelData
+            Layout.fillWidth: true
+            Layout.preferredWidth: modelData.key === "theme" ? Style.space(62) : Style.space(54)
+            Layout.preferredHeight: Style.space(28)
+            bordered: true
+            selected: root.colorMode === modelData.key
+            text: modelData.label
+            onClicked: root.selectColorMode(modelData.key)
+          }
+        }
+      }
+
+      RowLayout {
+        Layout.fillWidth: true
+        spacing: Style.space(4)
+
+        Text {
+          Layout.preferredWidth: Style.space(102)
           Layout.alignment: Qt.AlignVCenter
           textFormat: Text.PlainText
           text: "Preview Size"
           color: Color.foreground
           font.family: Style.font.family
           font.pixelSize: Style.font.body
+          elide: Text.ElideRight
         }
 
         Repeater {
@@ -1793,7 +1921,8 @@ BarWidget {
 
           Button {
             required property var modelData
-            Layout.preferredWidth: modelData.key === "off" ? Style.space(42) : Style.space(34)
+            Layout.fillWidth: true
+            Layout.preferredWidth: modelData.key === "off" ? Style.space(44) : Style.space(38)
             Layout.preferredHeight: Style.space(28)
             bordered: true
             selected: root.previewSize === modelData.key
@@ -1809,7 +1938,7 @@ BarWidget {
         spacing: Style.space(4)
 
         Text {
-          Layout.fillWidth: true
+          Layout.preferredWidth: Style.space(102)
           Layout.alignment: Qt.AlignVCenter
           textFormat: Text.PlainText
           text: "Notif Blink"
@@ -1829,6 +1958,7 @@ BarWidget {
 
           Button {
             required property var modelData
+            Layout.fillWidth: true
             Layout.preferredWidth: modelData.key === "slow" || modelData.key === "fast"
               ? Style.space(44)
               : Style.space(38)
