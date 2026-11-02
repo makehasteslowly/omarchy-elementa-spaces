@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "elemental-workspace-indicator",
   "name": "Elemental Workspace Indicator",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "author": "makehasteslowly",
   "license": "MIT",
   "homepage": "https://github.com/makehasteslowly/omarchy-five-elements-workspaces",
@@ -21,7 +21,8 @@
     "defaultSection": "left",
     "defaults": {
       "style": "elements",
-      "previewSize": "medium"
+      "previewSize": "medium",
+      "notificationSpeed": "fast"
     },
     "schema": [
       {
@@ -71,6 +72,31 @@
           {
             "value": "large",
             "label": "Large (256×158 detailed thumbnails)"
+          }
+        ]
+      },
+      {
+        "key": "notificationSpeed",
+        "type": "enum",
+        "label": "Notification Blink Speed",
+        "description": "Control the fade/blink speed when an app on an inactive workspace receives a notification (Off, Slow, Medium, or Fast).",
+        "defaultValue": "fast",
+        "options": [
+          {
+            "value": "off",
+            "label": "Off (Disable notification blink)"
+          },
+          {
+            "value": "slow",
+            "label": "Slow (Smooth breathing fade)"
+          },
+          {
+            "value": "medium",
+            "label": "Medium (Balanced fade)"
+          },
+          {
+            "value": "fast",
+            "label": "Fast (Brisk pulse)"
           }
         ]
       }
