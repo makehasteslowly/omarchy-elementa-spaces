@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
+import Quickshell.Wayland
 import qs.Commons
 import qs.Ui
 
@@ -24,9 +25,26 @@ BarWidget {
     return "elements"
   }
 
+  // Floating hover preview setting (defaults to true)
+  property int localPreviewOverride: -1 // -1 = unset, 0 = false, 1 = true
+  readonly property bool configuredPreview: {
+    if (!root.settings || root.settings.showPreview === undefined || root.settings.showPreview === null) return true
+    var val = root.settings.showPreview
+    if (typeof val === "boolean") return val
+    return String(val).toLowerCase() !== "false" && String(val) !== "0"
+  }
+  readonly property bool showPreview: root.localPreviewOverride !== -1
+    ? (root.localPreviewOverride === 1)
+    : root.configuredPreview
+
   property bool pickerOpen: false
   property bool initialPromptShown: false
   readonly property var styleOrder: ["elements", "alchemy", "godai", "wuxing"]
+
+  // Hover preview state
+  property int hoveredWorkspaceId: -1
+  property Item hoveredAnchorItem: null
+  property bool previewOpen: false
 
   function close() {
     root.pickerOpen = false
@@ -46,9 +64,19 @@ BarWidget {
     var currentIndex = root.styleOrder.indexOf(root.iconStyle)
     var nextStyle = root.styleOrder[(currentIndex + 1) % root.styleOrder.length]
     root.localStyleOverride = nextStyle
+    root.previewOpen = false
     root.pickerOpen = true
     if (root.bar) {
       root.bar.run("omarchy-bar set " + Util.shellQuote(root.pluginId) + " style " + Util.shellQuote(nextStyle))
+    }
+  }
+
+  function togglePreview() {
+    var nextVal = !root.showPreview
+    root.localPreviewOverride = nextVal ? 1 : 0
+    if (!nextVal) root.previewOpen = false
+    if (root.bar) {
+      root.bar.run("omarchy-bar set " + Util.shellQuote(root.pluginId) + " showPreview " + (nextVal ? "true" : "false"))
     }
   }
 
@@ -56,6 +84,10 @@ BarWidget {
     if (root.configuredStyle !== "") {
       root.localStyleOverride = ""
     }
+  }
+
+  onConfiguredPreviewChanged: {
+    root.localPreviewOverride = -1
   }
 
   readonly property var monitor: {
@@ -144,6 +176,23 @@ BarWidget {
       root.dispatch("o.workspaces.focus(" + root.slotOf(id) + ", \"" + root.monitorName + "\")")
     } else {
       root.dispatch("hl.dsp.focus({ workspace = \"" + id + "\" })")
+    }
+  }
+
+  function focusWindow(toplevelObj, workspaceId) {
+    root.previewOpen = false
+    if (!toplevelObj) {
+      if (workspaceId > 0) root.focusWorkspace(workspaceId)
+      return
+    }
+    var address = String(toplevelObj.address || "")
+    if (address) {
+      if (address.indexOf("0x") !== 0) address = "0x" + address
+      root.dispatch("hl.dsp.focus({ window = \"address:" + address + "\" })")
+    } else if (toplevelObj.wayland) {
+      toplevelObj.wayland.activate()
+    } else if (workspaceId > 0) {
+      root.focusWorkspace(workspaceId)
     }
   }
 
@@ -268,6 +317,48 @@ BarWidget {
     }
   }
 
+  // Hover preview timers: quick open on hover, smooth grace period when moving pointer into preview card.
+  Timer {
+    id: previewOpenTimer
+    interval: 120
+    repeat: false
+    onTriggered: {
+      if (root.showPreview && !root.pickerOpen && root.hoveredWorkspaceId > 0) {
+        Hyprland.refreshToplevels()
+        root.previewOpen = true
+      }
+    }
+  }
+
+  Timer {
+    id: previewCloseTimer
+    interval: 180
+    repeat: false
+    onTriggered: {
+      if (!previewPopup.containsMouse) {
+        root.previewOpen = false
+      }
+    }
+  }
+
+  function handleButtonHover(wsId, buttonItem, isHovered) {
+    if (isHovered) {
+      previewCloseTimer.stop()
+      root.hoveredWorkspaceId = wsId
+      root.hoveredAnchorItem = buttonItem
+      if (root.showPreview && !root.pickerOpen) {
+        if (root.previewOpen) {
+          Hyprland.refreshToplevels()
+        } else {
+          previewOpenTimer.restart()
+        }
+      }
+    } else {
+      previewOpenTimer.stop()
+      previewCloseTimer.restart()
+    }
+  }
+
   Connections {
     target: root.monitor
     function onActiveWorkspaceChanged() { root.showActiveMode() }
@@ -282,6 +373,10 @@ BarWidget {
       if (switched || name === "moveworkspacev2" || name === "changeworkspaceid") {
         Hyprland.refreshMonitors()
         Hyprland.refreshWorkspaces()
+      }
+      if (name === "openwindow" || name === "closewindow" || name === "movewindow" || name === "movewindowv2") {
+        Hyprland.refreshWorkspaces()
+        Hyprland.refreshToplevels()
       }
     }
   }
@@ -350,18 +445,25 @@ BarWidget {
         activeColor: element.color
         foreground: element.color
         opacity: shown ? 1.0 : (occupied ? 0.78 : 0.4)
-        tooltipText: shown
+        // Only show plain bar tooltip when floating preview is disabled
+        tooltipText: root.showPreview ? "" : (shown
           ? (slot + " · " + element.name + " (" + root.activeMode + ") · Right-click: style")
-          : (slot + " · " + element.name + " · Right-click: style")
+          : (slot + " · " + element.name + " · Right-click: style"))
         horizontalMargin: 6
         verticalPadding: 6
         fixedWidth: root.vertical ? root.barSize : Style.space(22)
         fixedHeight: root.barSize
+
+        onTooltipHoveredChanged: {
+          root.handleButtonHover(modelData, wsBtn, tooltipHovered)
+        }
+
         onPressed: function(button) {
           if (button === Qt.RightButton) {
             root.cycleStyle()
             return
           }
+          root.previewOpen = false
           if (shown) root.cycleLayout()
           else root.focusWorkspace(modelData)
         }
@@ -410,7 +512,6 @@ BarWidget {
             var h = height
             var targetSize = root.uniformIconSize
             var lw = 1.4
-            // Inset by half the stroke width so the outer painted bounds equal root.uniformIconSize (12px).
             var span = targetSize - lw
             var midX = w / 2
             var midY = h / 2
@@ -425,7 +526,6 @@ BarWidget {
             ctx.lineCap = "round"
 
             if (kind === "fire" || kind === "air") {
-              // Upward triangle △
               ctx.beginPath()
               ctx.moveTo(midX, top)
               ctx.lineTo(right, bottom)
@@ -433,7 +533,6 @@ BarWidget {
               ctx.closePath()
               ctx.stroke()
               if (kind === "air") {
-                // Horizontal crossbar for Air 🜁
                 var barY = top + span * 0.48
                 ctx.beginPath()
                 ctx.moveTo(left + span * 0.1, barY)
@@ -441,7 +540,6 @@ BarWidget {
                 ctx.stroke()
               }
             } else if (kind === "water" || kind === "earth") {
-              // Downward triangle ▽
               ctx.beginPath()
               ctx.moveTo(left, top)
               ctx.lineTo(right, top)
@@ -449,7 +547,6 @@ BarWidget {
               ctx.closePath()
               ctx.stroke()
               if (kind === "earth") {
-                // Horizontal crossbar for Earth 🜃
                 var eBarY = top + span * 0.52
                 ctx.beginPath()
                 ctx.moveTo(left + span * 0.1, eBarY)
@@ -457,7 +554,6 @@ BarWidget {
                 ctx.stroke()
               }
             } else {
-              // Aether / Quintessence 4-pointed star ✧
               var inner = span * 0.22
               ctx.beginPath()
               ctx.moveTo(midX, top)
@@ -495,6 +591,372 @@ BarWidget {
             NumberAnimation { duration: Style.duration(180); easing.type: Easing.Bezier; easing.bezierCurve: Style.easeOut }
           }
         }
+      }
+    }
+  }
+
+  // Floating Workspace Preview Window (on hover)
+  PopupCard {
+    id: previewPopup
+    anchorItem: root.hoveredAnchorItem ? root.hoveredAnchorItem : root
+    bar: root.bar
+    triggerMode: "hover"
+    open: root.previewOpen && root.showPreview && !root.pickerOpen && root.hoveredWorkspaceId > 0
+
+    readonly property int wsId: root.hoveredWorkspaceId > 0 ? root.hoveredWorkspaceId : 1
+    readonly property int slot: root.slotOf(wsId)
+    readonly property var element: root.elementForSlot(slot, root.iconStyle)
+    readonly property var workspaceObj: root.workspaceById(wsId)
+    readonly property var windowList: {
+      if (!workspaceObj || !workspaceObj.toplevels) return []
+      var raw = workspaceObj.toplevels.values
+      var out = []
+      for (var i = 0; i < raw.length && out.length < 4; i++) {
+        if (raw[i]) out.push(raw[i])
+      }
+      return out
+    }
+    readonly property int totalWindowCount: workspaceObj && workspaceObj.toplevels ? workspaceObj.toplevels.values.length : 0
+    readonly property bool isFocusedWs: root.activeWorkspaceId() === wsId
+    readonly property string modeLabel: isFocusedWs ? root.activeMode : (root.modeCache[wsId] || "")
+
+    borderColor: Qt.alpha(Qt.color(previewPopup.element.color), 0.55)
+
+    readonly property real cardThumbW: Style.space(188)
+    readonly property real cardThumbH: Style.space(116)
+    readonly property int columnsCount: windowList.length <= 1 ? 1 : 2
+
+    contentWidth: windowList.length === 0
+      ? Style.space(224)
+      : (columnsCount * cardThumbW + (columnsCount - 1) * Style.space(8) + padding * 2)
+    contentHeight: previewColumn.implicitHeight + padding * 2
+
+    onContainsMouseChanged: {
+      if (containsMouse) {
+        previewCloseTimer.stop()
+      } else {
+        previewCloseTimer.restart()
+      }
+    }
+
+    ColumnLayout {
+      id: previewColumn
+      anchors.fill: parent
+      spacing: Style.space(8)
+
+      // Header row: Element icon + Workspace number & Element name + Window count / mode
+      RowLayout {
+        Layout.fillWidth: true
+        spacing: Style.space(8)
+
+        Item {
+          width: 18
+          height: 18
+          Layout.alignment: Qt.AlignVCenter
+
+          Text {
+            visible: root.iconStyle !== "alchemy"
+            anchors.centerIn: parent
+            textFormat: Text.PlainText
+            text: previewPopup.element.icon
+            color: previewPopup.element.color
+            font.family: (root.iconStyle === "godai" || root.iconStyle === "wuxing")
+              ? "Noto Sans CJK JP"
+              : (root.bar ? root.bar.fontFamily : Style.font.family)
+            font.weight: (root.iconStyle === "godai" || root.iconStyle === "wuxing")
+              ? Font.DemiBold : Font.Normal
+            font.pixelSize: Math.round(root.uniformIconSize * previewPopup.element.glyphScale)
+            renderType: Text.CurveRendering
+          }
+
+          Canvas {
+            visible: root.iconStyle === "alchemy"
+            width: 16
+            height: 16
+            anchors.centerIn: parent
+            antialiasing: true
+            property string kind: previewPopup.element.alchemyKind
+            property color strokeColor: previewPopup.element.color
+            onKindChanged: requestPaint()
+            onStrokeColorChanged: requestPaint()
+            onPaint: {
+              var ctx = getContext("2d")
+              ctx.reset()
+              var targetSize = root.uniformIconSize
+              var lw = 1.4
+              var span = targetSize - lw
+              var midX = width / 2
+              var midY = height / 2
+              var left = midX - span / 2
+              var right = midX + span / 2
+              var top = midY - span / 2
+              var bottom = midY + span / 2
+              ctx.strokeStyle = String(strokeColor)
+              ctx.lineWidth = lw
+              ctx.lineJoin = "round"
+              ctx.lineCap = "round"
+              if (kind === "fire" || kind === "air") {
+                ctx.beginPath()
+                ctx.moveTo(midX, top)
+                ctx.lineTo(right, bottom)
+                ctx.lineTo(left, bottom)
+                ctx.closePath()
+                ctx.stroke()
+                if (kind === "air") {
+                  var barY = top + span * 0.48
+                  ctx.beginPath()
+                  ctx.moveTo(left + span * 0.1, barY)
+                  ctx.lineTo(right - span * 0.1, barY)
+                  ctx.stroke()
+                }
+              } else if (kind === "water" || kind === "earth") {
+                ctx.beginPath()
+                ctx.moveTo(left, top)
+                ctx.lineTo(right, top)
+                ctx.lineTo(midX, bottom)
+                ctx.closePath()
+                ctx.stroke()
+                if (kind === "earth") {
+                  var eBarY = top + span * 0.52
+                  ctx.beginPath()
+                  ctx.moveTo(left + span * 0.1, eBarY)
+                  ctx.lineTo(right - span * 0.1, eBarY)
+                  ctx.stroke()
+                }
+              } else {
+                var inner = span * 0.22
+                ctx.beginPath()
+                ctx.moveTo(midX, top)
+                ctx.lineTo(midX + inner, midY - inner)
+                ctx.lineTo(right, midY)
+                ctx.lineTo(midX + inner, midY + inner)
+                ctx.lineTo(midX, bottom)
+                ctx.lineTo(midX - inner, midY + inner)
+                ctx.lineTo(left, midY)
+                ctx.lineTo(midX - inner, midY - inner)
+                ctx.closePath()
+                ctx.stroke()
+              }
+            }
+          }
+        }
+
+        Text {
+          Layout.fillWidth: true
+          Layout.alignment: Qt.AlignVCenter
+          textFormat: Text.PlainText
+          text: previewPopup.slot + " · " + previewPopup.element.name
+          color: previewPopup.element.color
+          font.family: Style.font.family
+          font.pixelSize: Style.font.body
+          font.bold: true
+          elide: Text.ElideRight
+        }
+
+        Text {
+          Layout.alignment: Qt.AlignVCenter
+          textFormat: Text.PlainText
+          text: previewPopup.totalWindowCount === 0
+            ? (previewPopup.modeLabel ? previewPopup.modeLabel : "Empty")
+            : (previewPopup.totalWindowCount + (previewPopup.totalWindowCount === 1 ? " window" : " windows"))
+          color: Color.foreground
+          opacity: 0.6
+          font.family: Style.font.family
+          font.pixelSize: Style.font.small || 11
+        }
+      }
+
+      // Empty workspace placeholder card
+      Rectangle {
+        visible: previewPopup.windowList.length === 0
+        Layout.fillWidth: true
+        Layout.preferredHeight: Style.space(64)
+        radius: Math.max(4, Style.cornerRadius - 2)
+        color: Qt.rgba(1, 1, 1, emptyMouse.containsMouse ? 0.08 : 0.04)
+        border.width: 1
+        border.color: emptyMouse.containsMouse ? previewPopup.element.color : Qt.rgba(1, 1, 1, 0.08)
+
+        Behavior on color { ColorAnimation { duration: Style.duration(140) } }
+        Behavior on border.color { ColorAnimation { duration: Style.duration(140) } }
+
+        ColumnLayout {
+          anchors.centerIn: parent
+          spacing: Style.space(2)
+
+          Text {
+            Layout.alignment: Qt.AlignHCenter
+            textFormat: Text.PlainText
+            text: previewPopup.isFocusedWs ? "Active Workspace (Empty)" : "Empty Workspace"
+            color: Color.foreground
+            opacity: 0.75
+            font.family: Style.font.family
+            font.pixelSize: Style.font.body
+          }
+
+          Text {
+            Layout.alignment: Qt.AlignHCenter
+            textFormat: Text.PlainText
+            text: previewPopup.isFocusedWs ? "Click bar icon to cycle layout" : "Click to switch workspace"
+            color: Color.foreground
+            opacity: 0.45
+            font.family: Style.font.family
+            font.pixelSize: Style.font.small || 11
+          }
+        }
+
+        MouseArea {
+          id: emptyMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: {
+            root.previewOpen = false
+            root.focusWorkspace(previewPopup.wsId)
+          }
+        }
+      }
+
+      // Live Window Thumbnails Grid
+      GridLayout {
+        visible: previewPopup.windowList.length > 0
+        Layout.fillWidth: true
+        columns: previewPopup.columnsCount
+        columnSpacing: Style.space(8)
+        rowSpacing: Style.space(8)
+
+        Repeater {
+          model: previewPopup.windowList
+
+          Rectangle {
+            id: winCard
+            required property var modelData
+            readonly property var waylandToplevel: modelData ? modelData.wayland : null
+            readonly property string winTitle: (modelData && modelData.title)
+              ? String(modelData.title)
+              : (waylandToplevel && waylandToplevel.title ? String(waylandToplevel.title) : "Window")
+            readonly property string winClass: (modelData && modelData.lastIpcObject && modelData.lastIpcObject.class)
+              ? String(modelData.lastIpcObject.class)
+              : (waylandToplevel && waylandToplevel.appId ? String(waylandToplevel.appId) : "")
+            readonly property bool winActive: modelData ? Boolean(modelData.activated) : false
+
+            Layout.preferredWidth: previewPopup.cardThumbW
+            Layout.preferredHeight: previewPopup.cardThumbH
+            radius: Math.max(4, Style.cornerRadius - 2)
+            color: Qt.rgba(0, 0, 0, 0.28)
+            border.width: (winMouse.containsMouse || winActive) ? 1.5 : 1
+            border.color: winMouse.containsMouse
+              ? previewPopup.element.color
+              : (winActive ? Qt.rgba(1, 1, 1, 0.35) : Qt.rgba(1, 1, 1, 0.1))
+            clip: true
+
+            Behavior on border.color { ColorAnimation { duration: Style.duration(140) } }
+
+            // Thumbnail viewport area
+            Item {
+              id: thumbViewport
+              anchors.top: parent.top
+              anchors.left: parent.left
+              anchors.right: parent.right
+              anchors.bottom: titleBar.top
+              anchors.margins: 3
+              anchors.bottomMargin: 0
+              clip: true
+
+              // Live Wayland ScreencopyView
+              ScreencopyView {
+                id: screencopy
+                anchors.centerIn: parent
+                captureSource: (previewPopup.open && winCard.waylandToplevel) ? winCard.waylandToplevel : null
+                live: previewPopup.open && winCard.waylandToplevel !== null
+                paintCursor: false
+                constraintSize: Qt.size(320, 200)
+
+                readonly property real aspect: (sourceSize.width > 0 && sourceSize.height > 0)
+                  ? (sourceSize.width / sourceSize.height)
+                  : (16.0 / 10.0)
+                readonly property real availW: Math.max(1, thumbViewport.width)
+                readonly property real availH: Math.max(1, thumbViewport.height)
+
+                width: (availW / availH > aspect) ? Math.round(availH * aspect) : availW
+                height: (availW / availH > aspect) ? availH : Math.round(availW / aspect)
+              }
+
+              // Fallback label when window buffer is not yet captured
+              Text {
+                visible: !screencopy.hasContent
+                anchors.centerIn: parent
+                textFormat: Text.PlainText
+                text: winCard.winClass || winCard.winTitle
+                color: Color.foreground
+                opacity: 0.45
+                font.family: Style.font.family
+                font.pixelSize: Style.font.body
+                width: parent.width - 12
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+              }
+            }
+
+            // Bottom title strip
+            Rectangle {
+              id: titleBar
+              anchors.left: parent.left
+              anchors.right: parent.right
+              anchors.bottom: parent.bottom
+              height: Style.space(24)
+              color: winMouse.containsMouse
+                ? Qt.rgba(0, 0, 0, 0.65)
+                : Qt.rgba(0, 0, 0, 0.48)
+
+              RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: Style.space(6)
+                anchors.rightMargin: Style.space(6)
+                spacing: Style.space(4)
+
+                Rectangle {
+                  visible: winCard.winActive
+                  width: 5
+                  height: 5
+                  radius: 2.5
+                  color: previewPopup.element.color
+                  Layout.alignment: Qt.AlignVCenter
+                }
+
+                Text {
+                  Layout.fillWidth: true
+                  Layout.alignment: Qt.AlignVCenter
+                  textFormat: Text.PlainText
+                  text: winCard.winTitle
+                  color: Color.foreground
+                  font.family: Style.font.family
+                  font.pixelSize: Style.font.small || 11
+                  elide: Text.ElideRight
+                }
+              }
+            }
+
+            MouseArea {
+              id: winMouse
+              anchors.fill: parent
+              hoverEnabled: true
+              cursorShape: Qt.PointingHandCursor
+              onClicked: root.focusWindow(winCard.modelData, previewPopup.wsId)
+            }
+          }
+        }
+      }
+
+      // Overflow footer when > 4 windows are on the workspace
+      Text {
+        visible: previewPopup.totalWindowCount > 4
+        Layout.alignment: Qt.AlignRight
+        textFormat: Text.PlainText
+        text: "+" + (previewPopup.totalWindowCount - 4) + " more"
+        color: Color.foreground
+        opacity: 0.55
+        font.family: Style.font.family
+        font.pixelSize: Style.font.small || 11
       }
     }
   }
@@ -671,6 +1133,52 @@ BarWidget {
               verticalAlignment: Text.AlignVCenter
               elide: Text.ElideRight
             }
+          }
+        }
+      }
+
+      // Divider & toggle for Floating Hover Preview
+      Rectangle {
+        Layout.fillWidth: true
+        Layout.preferredHeight: 1
+        Layout.topMargin: Style.space(2)
+        Layout.bottomMargin: Style.space(2)
+        color: Color.foreground
+        opacity: 0.12
+      }
+
+      Button {
+        Layout.fillWidth: true
+        Layout.preferredHeight: Style.space(30)
+        bordered: true
+        selected: root.showPreview
+        onClicked: root.togglePreview()
+
+        RowLayout {
+          anchors.fill: parent
+          anchors.leftMargin: Style.space(10)
+          anchors.rightMargin: Style.space(10)
+          spacing: Style.space(10)
+
+          Text {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignVCenter
+            textFormat: Text.PlainText
+            text: "Floating Hover Preview"
+            color: Color.foreground
+            font.family: Style.font.family
+            font.pixelSize: Style.font.body
+          }
+
+          Text {
+            Layout.alignment: Qt.AlignVCenter
+            textFormat: Text.PlainText
+            text: root.showPreview ? "ON" : "OFF"
+            color: root.showPreview ? "#4ADE80" : Color.foreground
+            opacity: root.showPreview ? 1.0 : 0.5
+            font.family: Style.font.family
+            font.pixelSize: Style.font.body
+            font.bold: true
           }
         }
       }

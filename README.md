@@ -43,7 +43,8 @@ A Hyprland workspace indicator bar widget for [Omarchy](https://omarchy.org/) th
 ## Features
 
 - **4 Selectable Symbol Packs (Uniform `12px` Optical Height):** All 4 packs (`elements`, `alchemy`, `godai`, `wuxing`) are optically calibrated to an identical `12px` height and shared vertical centerline.
-- **Style Selector on Install & Right-Click:** Automatically opens a style selector popup on first install when no style is stored in `shell.json`, and you can **right-click** any workspace indicator on the bar at any time to switch between the 4 styles.
+- **Live Floating Workspace Preview (on Hover):** Hovering over any workspace indicator opens a floating preview card accented in that element's color, showing live Wayland window thumbnails (`ScreencopyView`) and titles of open windows on that workspace. Click any window card in the preview to jump directly to that window, or toggle the hover preview on/off from the right-click menu.
+- **Style Selector on Install & Right-Click:** Automatically opens a style selector popup on first install when no style is stored in `shell.json`, and you can **right-click** any workspace indicator on the bar at any time to switch between the 4 styles or toggle floating previews.
 - **Focused (Active) Workspace:** Rendered at full brightness (`1.0` opacity) in its elemental color with an animated elemental underline bar.
 - **Occupied Workspace:** Rendered in its elemental color at `0.78` opacity when windows are open on that workspace.
 - **Empty Workspace:** Rendered in its muted elemental tint at `0.40` opacity.
@@ -76,6 +77,10 @@ omarchy bar set elemental-workspace-indicator style godai
 
 # Chinese Wu Xing (木 火 土 金 水)
 omarchy bar set elemental-workspace-indicator style wuxing
+
+# Enable or disable the floating hover preview window
+omarchy bar set elemental-workspace-indicator showPreview true
+omarchy bar set elemental-workspace-indicator showPreview false
 ```
 
 To move the widget next to your launcher in the left bar section:
