@@ -290,8 +290,8 @@ BarWidget {
         text: element.icon
         active: shown
         activeColor: element.color
-        foreground: occupied || shown ? element.color : mutedColor
-        opacity: shown ? 1.0 : (occupied ? 0.78 : 0.35)
+        foreground: element.color
+        opacity: shown ? 1.0 : (occupied ? 0.78 : 0.4)
         tooltipText: shown
           ? (slot + " · " + element.name + " (" + root.activeMode + ")")
           : (slot + " · " + element.name)
