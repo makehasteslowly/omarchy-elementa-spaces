@@ -144,12 +144,14 @@ BarWidget {
   }
 
   // The 5 elements mapped across workspace slots (1-5, repeating for 6-10).
+  // glyphScale normalizes each Nerd Font glyph's ink height to the exact same 12px target as the Alchemical symbols.
+  readonly property real uniformIconSize: 12
   readonly property var elements: [
-    { icon: "󰈸", alchemySymbol: "🜂", alchemyKind: "fire",   name: "Fire",   color: "#FF6B35" },
-    { icon: "󰖌", alchemySymbol: "🜄", alchemyKind: "water",  name: "Water",  color: "#38BDF8" },
-    { icon: "󰌪", alchemySymbol: "🜃", alchemyKind: "earth",  name: "Earth",  color: "#4ADE80" },
-    { icon: "󰖝", alchemySymbol: "🜁", alchemyKind: "air",    name: "Air",    color: "#67E8F9" },
-    { icon: "󱐋", alchemySymbol: "✧",  alchemyKind: "aether", name: "Aether", color: "#C084FC" }
+    { icon: "󰈸", glyphScale: 1.29, alchemySymbol: "🜂", alchemyKind: "fire",   name: "Fire",   color: "#FF6B35" },
+    { icon: "󰖌", glyphScale: 1.38, alchemySymbol: "🜄", alchemyKind: "water",  name: "Water",  color: "#38BDF8" },
+    { icon: "󰌪", glyphScale: 1.24, alchemySymbol: "🜃", alchemyKind: "earth",  name: "Earth",  color: "#4ADE80" },
+    { icon: "󰖝", glyphScale: 1.19, alchemySymbol: "🜁", alchemyKind: "air",    name: "Air",    color: "#67E8F9" },
+    { icon: "󱐋", glyphScale: 1.10, alchemySymbol: "✧",  alchemyKind: "aether", name: "Aether", color: "#C084FC" }
   ]
 
   function elementForSlot(slot) {
@@ -299,7 +301,7 @@ BarWidget {
 
         bar: root.bar
         text: element.icon
-        labelVisible: !useAlchemy
+        labelVisible: false
         hasVisualContent: true
         active: shown
         activeColor: element.color
@@ -322,13 +324,30 @@ BarWidget {
         }
         onWheelMoved: function(delta) { root.scrollWorkspaces(delta) }
 
-        // Crisp vector Alchemical symbol renderer when "alchemy" style is active.
+        // Uniform-size Nerd Font elemental glyph renderer (exact 12px ink height across all 5 elements).
+        Text {
+          visible: !wsBtn.useAlchemy
+          anchors.centerIn: parent
+          anchors.verticalCenterOffset: -1
+          textFormat: Text.PlainText
+          text: wsBtn.element.icon
+          color: wsBtn.element.color
+          font.family: root.bar ? root.bar.fontFamily : Style.font.family
+          font.pixelSize: Math.round(root.uniformIconSize * wsBtn.element.glyphScale)
+          renderType: Text.CurveRendering
+          horizontalAlignment: Text.AlignHCenter
+          verticalAlignment: Text.AlignVCenter
+          scale: wsBtn.pressScale
+        }
+
+        // Uniform-size vector Alchemical symbol renderer (exact 12px outer bounds matching the elemental glyphs).
         Canvas {
           id: alchemyCanvas
           visible: wsBtn.useAlchemy
-          width: Style.bar.iconCanvas
-          height: Style.bar.iconCanvas
+          width: 16
+          height: 16
           anchors.centerIn: parent
+          anchors.verticalCenterOffset: -1
           scale: wsBtn.pressScale
           antialiasing: true
 
@@ -345,16 +364,19 @@ BarWidget {
             ctx.reset()
             var w = width
             var h = height
-            var pad = Math.max(2, w * 0.14)
-            var left = pad
-            var right = w - pad
-            var top = pad
-            var bottom = h - pad
+            var targetSize = root.uniformIconSize
+            var lw = 1.4
+            // Inset by half the stroke width so the outer painted bounds equal root.uniformIconSize (12px).
+            var span = targetSize - lw
             var midX = w / 2
             var midY = h / 2
+            var left = midX - span / 2
+            var right = midX + span / 2
+            var top = midY - span / 2
+            var bottom = midY + span / 2
 
             ctx.strokeStyle = String(strokeColor)
-            ctx.lineWidth = Math.max(1.45, w * 0.1)
+            ctx.lineWidth = lw
             ctx.lineJoin = "round"
             ctx.lineCap = "round"
 
@@ -368,10 +390,10 @@ BarWidget {
               ctx.stroke()
               if (kind === "air") {
                 // Horizontal crossbar for Air 🜁
-                var barY = top + (bottom - top) * 0.48
+                var barY = top + span * 0.48
                 ctx.beginPath()
-                ctx.moveTo(left + (right - left) * 0.12, barY)
-                ctx.lineTo(right - (right - left) * 0.12, barY)
+                ctx.moveTo(left + span * 0.1, barY)
+                ctx.lineTo(right - span * 0.1, barY)
                 ctx.stroke()
               }
             } else if (kind === "water" || kind === "earth") {
@@ -384,15 +406,15 @@ BarWidget {
               ctx.stroke()
               if (kind === "earth") {
                 // Horizontal crossbar for Earth 🜃
-                var eBarY = top + (bottom - top) * 0.52
+                var eBarY = top + span * 0.52
                 ctx.beginPath()
-                ctx.moveTo(left + (right - left) * 0.12, eBarY)
-                ctx.lineTo(right - (right - left) * 0.12, eBarY)
+                ctx.moveTo(left + span * 0.1, eBarY)
+                ctx.lineTo(right - span * 0.1, eBarY)
                 ctx.stroke()
               }
             } else {
               // Aether / Quintessence 4-pointed star ✧
-              var inner = (right - left) * 0.18
+              var inner = span * 0.22
               ctx.beginPath()
               ctx.moveTo(midX, top)
               ctx.lineTo(midX + inner, midY - inner)
