@@ -619,15 +619,9 @@ BarWidget {
     }
   }
 
-  function cycleStyle() {
-    var currentIndex = root.styleOrder.indexOf(root.iconStyle)
-    var nextStyle = root.styleOrder[(currentIndex + 1) % root.styleOrder.length]
-    root.localStyleOverride = nextStyle
+  function toggleStyleMenu() {
     root.previewOpen = false
-    root.pickerOpen = true
-    if (root.bar) {
-      root.bar.run("omarchy-bar set " + Util.shellQuote(root.pluginId) + " style " + Util.shellQuote(nextStyle))
-    }
+    root.pickerOpen = !root.pickerOpen
   }
 
   function selectColorMode(nextMode) {
@@ -1123,7 +1117,7 @@ BarWidget {
 
         onPressed: function(button) {
           if (button === Qt.RightButton) {
-            root.cycleStyle()
+            root.toggleStyleMenu()
             return
           }
           root.previewOpen = false

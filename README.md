@@ -1,6 +1,6 @@
 # Elemental Workspace Indicator (`elemental-workspace-indicator`)
 
-A Hyprland workspace indicator bar widget for [Omarchy](https://omarchy.org/) that represents your workspaces with the symbols and elemental colors of the **Five Elements** across **4 selectable traditions** — complete with **notification workspace & window blinking (`Notif Blink`: `Slow` / `Med` / `Fast` / `Off`)** and a **resizable live floating workspace preview window** (`Small`, `Medium`, `Large`, or `Off`) on hover:
+A Hyprland workspace indicator bar widget for [Omarchy](https://omarchy.org/) that represents your workspaces with the symbols and elemental colors of the **Five Elements** across **4 selectable traditions** — complete with **3 icon color modes (`Soft` / `Bold` / `Theme`)**, **notification workspace & window blinking (`Notif Blink`: `Slow` / `Med` / `Fast` / `Off`)**, and a **resizable live floating workspace preview window** (`Small`, `Medium`, `Large`, or `Off`) on hover:
 
 1. **Elemental Icons (`elements`)** — `󰈸 󰖌 󰌪 󰖝 󱐋` (Fire, Water, Earth, Air, Aether)
 2. **Alchemical Symbols (`alchemy`)** — `🜂 🜄 🜃 🜁 ✧` (Classical Alchemical Geometry)
@@ -21,7 +21,7 @@ A Hyprland workspace indicator bar widget for [Omarchy](https://omarchy.org/) th
 | **Click** a window card in preview | Switches directly to that workspace and focuses that exact window |
 | **Left-Click** an inactive workspace | Switches to that workspace (and clears any active notification blink) |
 | **Left-Click** the active workspace | Cycles the workspace's Hyprland layout (`dwindle` → `scrolling` → `floating`) |
-| **Right-Click** any workspace icon | Cycles the symbol style and opens the **Style, Icon Colors (`Soft` / `Bold` / `Theme`), Preview Size (`Off` / `S` / `M` / `L`), and Notif Blink (`Off` / `Slow` / `Med` / `Fast`)** popup |
+| **Right-Click** any workspace icon | Opens the **Style, Icon Colors (`Soft` / `Bold` / `Theme`), Preview Size (`Off` / `S` / `M` / `L`), and Notif Blink (`Off` / `Slow` / `Med` / `Fast`)** popup |
 | **Scroll Wheel** over widget | Scrolls through workspaces on the current monitor |
 
 ## Notification Blink (`Notif Blink`) & Preview Highlight
