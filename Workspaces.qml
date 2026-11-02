@@ -1750,7 +1750,7 @@ BarWidget {
         }
       }
 
-      // Notification Pulse speed selector (Off / Slow / Med / Fast)
+      // Notif Blink speed selector (Off / Slow / Med / Fast)
       RowLayout {
         Layout.fillWidth: true
         spacing: Style.space(4)
@@ -1759,10 +1759,11 @@ BarWidget {
           Layout.fillWidth: true
           Layout.alignment: Qt.AlignVCenter
           textFormat: Text.PlainText
-          text: "Notification Pulse"
+          text: "Notif Blink"
           color: Color.foreground
           font.family: Style.font.family
           font.pixelSize: Style.font.body
+          elide: Text.ElideRight
         }
 
         Repeater {

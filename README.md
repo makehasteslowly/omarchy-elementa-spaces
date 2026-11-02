@@ -21,7 +21,7 @@ A Hyprland workspace indicator bar widget for [Omarchy](https://omarchy.org/) th
 | **Click** a window card in preview | Switches directly to that workspace and focuses that exact window |
 | **Left-Click** an inactive workspace | Switches to that workspace |
 | **Left-Click** the active workspace | Cycles the workspace's Hyprland layout (`dwindle` → `scrolling` → `floating`) |
-| **Right-Click** any workspace icon | Cycles the symbol style and opens the **Style, Preview Size (`Off` / `S` / `M` / `L`), and Notification Pulse (`Off` / `Slow` / `Med` / `Fast`)** popup |
+| **Right-Click** any workspace icon | Cycles the symbol style and opens the **Style, Preview Size (`Off` / `S` / `M` / `L`), and Notif Blink (`Off` / `Slow` / `Med` / `Fast`)** popup |
 | **Scroll Wheel** over widget | Scrolls through workspaces on the current monitor |
 
 ## Element & Color Maps
@@ -69,9 +69,9 @@ A Hyprland workspace indicator bar widget for [Omarchy](https://omarchy.org/) th
 ## Features
 
 - **4 Selectable Symbol Packs (Uniform `12px` Optical Height):** All 4 packs (`elements`, `alchemy`, `godai`, `wuxing`) are optically calibrated to an identical `12px` height and shared vertical centerline.
-- **Notification Pulse (`Off` / `Slow` / `Med` / `Fast`):** When an app, standalone PWA, or browser tab (including web apps that notify via tab title badges like `(1) Facebook` or `"messaged you"`) on an inactive workspace triggers a notification or Wayland urgency signal, that workspace's elemental icon on the bar and the notifying window card inside the hover preview smoothly pulse in brightness at your chosen speed (`Slow`, `Med`, `Fast`, or `Off`) until you visit that workspace.
+- **Notif Blink (`Off` / `Slow` / `Med` / `Fast`):** When an app, standalone PWA, or browser tab (including web apps that notify via tab title badges like `(1) Facebook` or `"messaged you"`) on an inactive workspace triggers a notification or Wayland urgency signal, that workspace's elemental icon on the bar and the notifying window card inside the hover preview smoothly pulse in brightness at your chosen speed (`Slow`, `Med`, `Fast`, or `Off`) until you visit that workspace.
 - **Resizable Live Floating Workspace Preview (on Hover):** Hovering over any workspace indicator opens a floating preview card accented in that element's color, showing live Wayland window thumbnails (`ScreencopyView`), a 360° active-window elemental border (or pulsing notification border + `󰂚` title highlight for notifying windows), and window titles. Click any window card in the preview to jump directly to that window, or choose your preferred preview size (`Off`, `Small`, `Medium`, `Large`) from the right-click menu.
-- **Style, Preview Size & Notification Pulse Selector:** Automatically opens a selector popup on first install when no style is stored in `shell.json`, and you can **right-click** any workspace indicator on the bar at any time to switch between the 4 styles, resize the floating preview (`Off` / `S` / `M` / `L`), or adjust **Notification Pulse** (`Off` / `Slow` / `Med` / `Fast`).
+- **Style, Preview Size & Notif Blink Selector:** Automatically opens a selector popup on first install when no style is stored in `shell.json`, and you can **right-click** any workspace indicator on the bar at any time to switch between the 4 styles, resize the floating preview (`Off` / `S` / `M` / `L`), or adjust **Notif Blink** (`Off` / `Slow` / `Med` / `Fast`).
 - **Focused (Active) Workspace:** Rendered at full brightness (`1.0` opacity) in its elemental color with an animated elemental underline bar.
 - **Occupied Workspace:** Rendered in its elemental color at `0.78` opacity when windows are open on that workspace.
 - **Empty Workspace:** Rendered in its muted elemental tint at `0.40` opacity.
