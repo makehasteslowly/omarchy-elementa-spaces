@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "id": "elemental-workspace-indicator",
   "name": "Elemental Workspace Indicator",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "author": "makehasteslowly",
   "license": "MIT",
   "homepage": "https://github.com/makehasteslowly/omarchy-five-elements-workspaces",
-  "description": "Hyprland workspace indicators for Omarchy with 4 selectable 5-element traditions (Elemental Icons, Alchemical Symbols, Japanese Godai, Chinese Wu Xing) and live floating workspace window previews.",
+  "description": "Hyprland workspace indicators for Omarchy with 4 selectable 5-element traditions (Elemental Icons, Alchemical Symbols, Japanese Godai, Chinese Wu Xing) and resizable live floating workspace window previews.",
   "kinds": [
     "bar-widget"
   ],
@@ -15,13 +15,13 @@
   },
   "barWidget": {
     "displayName": "Elemental Workspace Indicator",
-    "description": "Workspace indicators for the 5 elements with live floating workspace previews and 4 symbol styles (Elemental, Alchemy, Japanese Godai, Chinese Wu Xing).",
+    "description": "Workspace indicators for the 5 elements with resizable live floating workspace previews and 4 symbol styles (Elemental, Alchemy, Japanese Godai, Chinese Wu Xing).",
     "category": "Compositor",
     "allowMultiple": false,
     "defaultSection": "left",
     "defaults": {
       "style": "elements",
-      "showPreview": true
+      "previewSize": "medium"
     },
     "schema": [
       {
@@ -50,11 +50,29 @@
         ]
       },
       {
-        "key": "showPreview",
-        "type": "boolean",
-        "label": "Floating Workspace Preview",
-        "description": "Show a floating preview window with live Wayland window thumbnails when hovering over a workspace indicator.",
-        "defaultValue": true
+        "key": "previewSize",
+        "type": "enum",
+        "label": "Floating Preview Size",
+        "description": "Choose the size of the floating workspace preview window shown on hover (Small, Medium, Large, or Off).",
+        "defaultValue": "medium",
+        "options": [
+          {
+            "value": "off",
+            "label": "Off (Disable floating preview)"
+          },
+          {
+            "value": "small",
+            "label": "Small (140×88 compact thumbnails)"
+          },
+          {
+            "value": "medium",
+            "label": "Medium (188×116 balanced thumbnails)"
+          },
+          {
+            "value": "large",
+            "label": "Large (256×158 detailed thumbnails)"
+          }
+        ]
       }
     ]
   },

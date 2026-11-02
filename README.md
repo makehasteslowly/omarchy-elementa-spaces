@@ -104,9 +104,11 @@ omarchy bar set elemental-workspace-indicator style godai
 # Chinese Wu Xing (木 火 土 金 水)
 omarchy bar set elemental-workspace-indicator style wuxing
 
-# Enable or disable the floating hover preview window
-omarchy bar set elemental-workspace-indicator showPreview true
-omarchy bar set elemental-workspace-indicator showPreview false
+# Set the floating hover preview window size (off, small, medium, large)
+omarchy bar set elemental-workspace-indicator previewSize small
+omarchy bar set elemental-workspace-indicator previewSize medium
+omarchy bar set elemental-workspace-indicator previewSize large
+omarchy bar set elemental-workspace-indicator previewSize off
 ```
 
 To move the widget next to your launcher in the left bar section:

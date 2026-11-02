@@ -25,17 +25,23 @@ BarWidget {
     return "elements"
   }
 
-  // Floating hover preview setting (defaults to true)
-  property int localPreviewOverride: -1 // -1 = unset, 0 = false, 1 = true
-  readonly property bool configuredPreview: {
-    if (!root.settings || root.settings.showPreview === undefined || root.settings.showPreview === null) return true
-    var val = root.settings.showPreview
-    if (typeof val === "boolean") return val
-    return String(val).toLowerCase() !== "false" && String(val) !== "0"
+  // Floating hover preview size setting: "off" | "small" | "medium" | "large" (defaults to "medium")
+  property string localPreviewSizeOverride: ""
+  readonly property string configuredPreviewSize: {
+    if (root.settings && root.settings.previewSize !== undefined && root.settings.previewSize !== null) {
+      var s = String(root.settings.previewSize).toLowerCase()
+      if (s === "off" || s === "small" || s === "medium" || s === "large") return s
+    }
+    if (root.settings && root.settings.showPreview !== undefined && root.settings.showPreview !== null) {
+      var v = root.settings.showPreview
+      if (v === false || String(v).toLowerCase() === "false" || String(v) === "0") return "off"
+    }
+    return "medium"
   }
-  readonly property bool showPreview: root.localPreviewOverride !== -1
-    ? (root.localPreviewOverride === 1)
-    : root.configuredPreview
+  readonly property string previewSize: root.localPreviewSizeOverride !== ""
+    ? root.localPreviewSizeOverride
+    : root.configuredPreviewSize
+  readonly property bool showPreview: root.previewSize !== "off"
 
   property bool pickerOpen: false
   property bool initialPromptShown: false
@@ -71,12 +77,13 @@ BarWidget {
     }
   }
 
-  function togglePreview() {
-    var nextVal = !root.showPreview
-    root.localPreviewOverride = nextVal ? 1 : 0
-    if (!nextVal) root.previewOpen = false
+  function selectPreviewSize(nextSize) {
+    var normalized = (nextSize === "off" || nextSize === "small" || nextSize === "large")
+      ? nextSize : "medium"
+    root.localPreviewSizeOverride = normalized
+    if (normalized === "off") root.previewOpen = false
     if (root.bar) {
-      root.bar.run("omarchy-bar set " + Util.shellQuote(root.pluginId) + " showPreview " + (nextVal ? "true" : "false"))
+      root.bar.run("omarchy-bar set " + Util.shellQuote(root.pluginId) + " previewSize " + Util.shellQuote(normalized))
     }
   }
 
@@ -86,8 +93,8 @@ BarWidget {
     }
   }
 
-  onConfiguredPreviewChanged: {
-    root.localPreviewOverride = -1
+  onConfiguredPreviewSizeChanged: {
+    root.localPreviewSizeOverride = ""
   }
 
   readonly property var monitor: {
@@ -622,12 +629,24 @@ BarWidget {
 
     borderColor: Qt.alpha(Qt.color(previewPopup.element.color), 0.55)
 
-    readonly property real cardThumbW: Style.space(188)
-    readonly property real cardThumbH: Style.space(116)
+    readonly property real cardThumbW: root.previewSize === "small"
+      ? Style.space(140)
+      : (root.previewSize === "large" ? Style.space(256) : Style.space(188))
+    readonly property real cardThumbH: root.previewSize === "small"
+      ? Style.space(88)
+      : (root.previewSize === "large" ? Style.space(158) : Style.space(116))
+    readonly property int captureW: root.previewSize === "small" ? 280 : (root.previewSize === "large" ? 512 : 360)
+    readonly property int captureH: root.previewSize === "small" ? 176 : (root.previewSize === "large" ? 320 : 225)
+    readonly property real emptyW: root.previewSize === "small"
+      ? Style.space(196)
+      : (root.previewSize === "large" ? Style.space(272) : Style.space(224))
+    readonly property real emptyH: root.previewSize === "small"
+      ? Style.space(52)
+      : (root.previewSize === "large" ? Style.space(76) : Style.space(64))
     readonly property int columnsCount: windowList.length <= 1 ? 1 : 2
 
     contentWidth: windowList.length === 0
-      ? Style.space(224)
+      ? emptyW
       : (columnsCount * cardThumbW + (columnsCount - 1) * Style.space(8) + padding * 2)
     contentHeight: previewColumn.implicitHeight + padding * 2
 
@@ -770,7 +789,7 @@ BarWidget {
       Rectangle {
         visible: previewPopup.windowList.length === 0
         Layout.fillWidth: true
-        Layout.preferredHeight: Style.space(64)
+        Layout.preferredHeight: previewPopup.emptyH
         radius: Math.max(4, Style.cornerRadius - 2)
         color: Qt.rgba(1, 1, 1, emptyMouse.containsMouse ? 0.08 : 0.04)
         border.width: 1
@@ -865,7 +884,7 @@ BarWidget {
                 captureSource: (previewPopup.open && winCard.waylandToplevel) ? winCard.waylandToplevel : null
                 live: previewPopup.open && winCard.waylandToplevel !== null
                 paintCursor: false
-                constraintSize: Qt.size(320, 200)
+                constraintSize: Qt.size(previewPopup.captureW, previewPopup.captureH)
 
                 readonly property real aspect: (sourceSize.width > 0 && sourceSize.height > 0)
                   ? (sourceSize.width / sourceSize.height)
@@ -1153,7 +1172,7 @@ BarWidget {
         }
       }
 
-      // Divider & toggle for Floating Hover Preview
+      // Divider & Preview Size selector (Off / S / M / L)
       Rectangle {
         Layout.fillWidth: true
         Layout.preferredHeight: 1
@@ -1163,38 +1182,36 @@ BarWidget {
         opacity: 0.12
       }
 
-      Button {
+      RowLayout {
         Layout.fillWidth: true
-        Layout.preferredHeight: Style.space(30)
-        bordered: true
-        selected: root.showPreview
-        onClicked: root.togglePreview()
+        spacing: Style.space(6)
 
-        RowLayout {
-          anchors.fill: parent
-          anchors.leftMargin: Style.space(10)
-          anchors.rightMargin: Style.space(10)
-          spacing: Style.space(10)
+        Text {
+          Layout.fillWidth: true
+          Layout.alignment: Qt.AlignVCenter
+          textFormat: Text.PlainText
+          text: "Preview Size"
+          color: Color.foreground
+          font.family: Style.font.family
+          font.pixelSize: Style.font.body
+        }
 
-          Text {
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignVCenter
-            textFormat: Text.PlainText
-            text: "Floating Hover Preview"
-            color: Color.foreground
-            font.family: Style.font.family
-            font.pixelSize: Style.font.body
-          }
+        Repeater {
+          model: [
+            { key: "off",    label: "Off" },
+            { key: "small",  label: "S" },
+            { key: "medium", label: "M" },
+            { key: "large",  label: "L" }
+          ]
 
-          Text {
-            Layout.alignment: Qt.AlignVCenter
-            textFormat: Text.PlainText
-            text: root.showPreview ? "ON" : "OFF"
-            color: root.showPreview ? "#4ADE80" : Color.foreground
-            opacity: root.showPreview ? 1.0 : 0.5
-            font.family: Style.font.family
-            font.pixelSize: Style.font.body
-            font.bold: true
+          Button {
+            required property var modelData
+            Layout.preferredWidth: modelData.key === "off" ? Style.space(42) : Style.space(34)
+            Layout.preferredHeight: Style.space(28)
+            bordered: true
+            selected: root.previewSize === modelData.key
+            text: modelData.label
+            onClicked: root.selectPreviewSize(modelData.key)
           }
         }
       }
