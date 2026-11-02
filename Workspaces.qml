@@ -838,18 +838,14 @@ BarWidget {
               ? String(modelData.lastIpcObject.class)
               : (waylandToplevel && waylandToplevel.appId ? String(waylandToplevel.appId) : "")
             readonly property bool winActive: modelData ? Boolean(modelData.activated) : false
+            readonly property int strokeW: (winMouse.containsMouse || winActive) ? 2 : 1
 
             Layout.preferredWidth: previewPopup.cardThumbW
             Layout.preferredHeight: previewPopup.cardThumbH
             radius: Math.max(4, Style.cornerRadius - 2)
             color: Qt.rgba(0, 0, 0, 0.28)
-            border.width: (winMouse.containsMouse || winActive) ? 1.5 : 1
-            border.color: winMouse.containsMouse
-              ? previewPopup.element.color
-              : (winActive ? Qt.rgba(1, 1, 1, 0.35) : Qt.rgba(1, 1, 1, 0.1))
+            border.width: 0
             clip: true
-
-            Behavior on border.color { ColorAnimation { duration: Style.duration(140) } }
 
             // Thumbnail viewport area
             Item {
@@ -858,7 +854,7 @@ BarWidget {
               anchors.left: parent.left
               anchors.right: parent.right
               anchors.bottom: titleBar.top
-              anchors.margins: 3
+              anchors.margins: winCard.strokeW + 2
               anchors.bottomMargin: 0
               clip: true
 
@@ -897,12 +893,15 @@ BarWidget {
               }
             }
 
-            // Bottom title strip
+            // Bottom title strip (inset inside the border so it never darkens or covers the border ring)
             Rectangle {
               id: titleBar
               anchors.left: parent.left
               anchors.right: parent.right
               anchors.bottom: parent.bottom
+              anchors.leftMargin: winCard.strokeW
+              anchors.rightMargin: winCard.strokeW
+              anchors.bottomMargin: winCard.strokeW
               height: Style.space(24)
               color: winMouse.containsMouse
                 ? Qt.rgba(0, 0, 0, 0.65)
@@ -934,6 +933,23 @@ BarWidget {
                   elide: Text.ElideRight
                 }
               }
+            }
+
+            // Top-level border ring rendered above both thumbnail and title strip for uniform 360° opacity
+            Rectangle {
+              id: borderOverlay
+              z: 10
+              anchors.fill: parent
+              radius: winCard.radius
+              color: "transparent"
+              border.width: winCard.strokeW
+              border.color: winMouse.containsMouse
+                ? previewPopup.element.color
+                : (winCard.winActive
+                  ? Qt.alpha(Qt.color(previewPopup.element.color), 0.78)
+                  : Qt.rgba(1, 1, 1, 0.16))
+
+              Behavior on border.color { ColorAnimation { duration: Style.duration(140) } }
             }
 
             MouseArea {
