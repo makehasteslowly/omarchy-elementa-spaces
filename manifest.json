@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "id": "elemental-workspace-indicator",
   "name": "Elemental Workspace Indicator",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "author": "makehasteslowly",
   "license": "MIT",
   "homepage": "https://github.com/makehasteslowly/omarchy-five-elements-workspaces",
-  "description": "Hyprland workspace indicators for Omarchy with selectable Nerd Font elemental icons or Alchemical geometric symbols for the 5 elements.",
+  "description": "Hyprland workspace indicators for Omarchy with 4 selectable 5-element traditions: Elemental Icons, Alchemical Symbols, Japanese Godai, and Chinese Wu Xing.",
   "kinds": [
     "bar-widget"
   ],
@@ -15,7 +15,7 @@
   },
   "barWidget": {
     "displayName": "Elemental Workspace Indicator",
-    "description": "Workspace indicators for the 5 elements (Elemental Icons or Alchemical Symbols). Right-click to switch style.",
+    "description": "Workspace indicators for the 5 elements (Elemental, Alchemy, Japanese Godai, Chinese Wu Xing). Right-click to switch style.",
     "category": "Compositor",
     "allowMultiple": false,
     "defaultSection": "left",
@@ -27,7 +27,7 @@
         "key": "style",
         "type": "enum",
         "label": "Symbol Style",
-        "description": "Choose between Nerd Font elemental icons (󰈸 󰖌 󰌪 󰖝 󱐋) or Alchemical geometric symbols (🜂 🜄 🜃 🜁 ✧). You can also right-click the widget on the bar to open the style selector.",
+        "description": "Choose between Nerd Font elemental icons (󰈸 󰖌 󰌪 󰖝 󱐋), Alchemical symbols (🜂 🜄 🜃 🜁 ✧), Japanese Godai (地 水 火 風 空), or Chinese Wu Xing (木 火 土 金 水). Right-click the widget on the bar to switch anytime.",
         "defaultValue": "elements",
         "options": [
           {
@@ -37,6 +37,14 @@
           {
             "value": "alchemy",
             "label": "🜂  Alchemical Symbols (🜂 🜄 🜃 🜁 ✧)"
+          },
+          {
+            "value": "godai",
+            "label": "地  Japanese Godai (地 水 火 風 空)"
+          },
+          {
+            "value": "wuxing",
+            "label": "木  Chinese Wu Xing (木 火 土 金 水)"
           }
         ]
       }

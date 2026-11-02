@@ -13,20 +13,23 @@ BarWidget {
   readonly property int slots: 10
   readonly property string pluginId: "elemental-workspace-indicator"
 
-  // "elements" (Nerd Font elemental glyphs) or "alchemy" (Alchemical geometric symbols).
+  // Supported styles: "elements" | "alchemy" | "godai" | "wuxing"
   property string localStyleOverride: ""
   readonly property string configuredStyle: root.settings && root.settings.style !== undefined && root.settings.style !== null
     ? String(root.settings.style)
     : ""
-  readonly property string iconStyle: root.localStyleOverride !== ""
-    ? root.localStyleOverride
-    : (root.configuredStyle === "alchemy" ? "alchemy" : "elements")
+  readonly property string iconStyle: {
+    var candidate = root.localStyleOverride !== "" ? root.localStyleOverride : root.configuredStyle
+    if (candidate === "alchemy" || candidate === "godai" || candidate === "wuxing") return candidate
+    return "elements"
+  }
 
   property bool pickerOpen: false
   property bool initialPromptShown: false
 
   function selectStyle(nextStyle) {
-    var normalized = nextStyle === "alchemy" ? "alchemy" : "elements"
+    var normalized = (nextStyle === "alchemy" || nextStyle === "godai" || nextStyle === "wuxing")
+      ? nextStyle : "elements"
     root.localStyleOverride = normalized
     root.pickerOpen = false
     if (root.bar) {
@@ -143,20 +146,44 @@ BarWidget {
     if (target !== ids[index]) root.focusWorkspace(target)
   }
 
-  // The 5 elements mapped across workspace slots (1-5, repeating for 6-10).
-  // glyphScale normalizes each Nerd Font glyph's ink height to the exact same 12px target as the Alchemical symbols.
+  // Uniform 12px optical height across all 4 symbol packs.
   readonly property real uniformIconSize: 12
-  readonly property var elements: [
-    { icon: "󰈸", glyphScale: 1.29, alchemySymbol: "🜂", alchemyKind: "fire",   name: "Fire",   color: "#FF6B35" },
-    { icon: "󰖌", glyphScale: 1.38, alchemySymbol: "🜄", alchemyKind: "water",  name: "Water",  color: "#38BDF8" },
-    { icon: "󰌪", glyphScale: 1.24, alchemySymbol: "🜃", alchemyKind: "earth",  name: "Earth",  color: "#4ADE80" },
-    { icon: "󰖝", glyphScale: 1.19, alchemySymbol: "🜁", alchemyKind: "air",    name: "Air",    color: "#67E8F9" },
-    { icon: "󱐋", glyphScale: 1.10, alchemySymbol: "✧",  alchemyKind: "aether", name: "Aether", color: "#C084FC" }
-  ]
 
-  function elementForSlot(slot) {
-    var idx = ((slot - 1) % root.elements.length + root.elements.length) % root.elements.length
-    return root.elements[idx]
+  readonly property var packs: ({
+    elements: [
+      { icon: "󰈸", glyphScale: 1.29, alchemyKind: "fire",   name: "Fire",   color: "#FF6B35" },
+      { icon: "󰖌", glyphScale: 1.38, alchemyKind: "water",  name: "Water",  color: "#38BDF8" },
+      { icon: "󰌪", glyphScale: 1.24, alchemyKind: "earth",  name: "Earth",  color: "#4ADE80" },
+      { icon: "󰖝", glyphScale: 1.19, alchemyKind: "air",    name: "Air",    color: "#67E8F9" },
+      { icon: "󱐋", glyphScale: 1.10, alchemyKind: "aether", name: "Aether", color: "#C084FC" }
+    ],
+    alchemy: [
+      { icon: "🜂", glyphScale: 1.0,  alchemyKind: "fire",   name: "Fire (🜂)",   color: "#FF6B35" },
+      { icon: "🜄", glyphScale: 1.0,  alchemyKind: "water",  name: "Water (🜄)",  color: "#38BDF8" },
+      { icon: "🜃", glyphScale: 1.0,  alchemyKind: "earth",  name: "Earth (🜃)",  color: "#4ADE80" },
+      { icon: "🜁", glyphScale: 1.0,  alchemyKind: "air",    name: "Air (🜁)",    color: "#67E8F9" },
+      { icon: "✧",  glyphScale: 1.0,  alchemyKind: "aether", name: "Aether (✧)", color: "#C084FC" }
+    ],
+    godai: [
+      { icon: "地", glyphScale: 1.09, alchemyKind: "earth",  name: "Chi · Earth (地)", color: "#4ADE80" },
+      { icon: "水", glyphScale: 1.07, alchemyKind: "water",  name: "Sui · Water (水)", color: "#38BDF8" },
+      { icon: "火", glyphScale: 1.09, alchemyKind: "fire",   name: "Ka · Fire (火)",   color: "#FF6B35" },
+      { icon: "風", glyphScale: 1.11, alchemyKind: "air",    name: "Fū · Wind (風)",   color: "#67E8F9" },
+      { icon: "空", glyphScale: 1.10, alchemyKind: "aether", name: "Kū · Void (空)",   color: "#C084FC" }
+    ],
+    wuxing: [
+      { icon: "木", glyphScale: 1.07, alchemyKind: "earth",  name: "Mù · Wood (木)",   color: "#4ADE80" },
+      { icon: "火", glyphScale: 1.09, alchemyKind: "fire",   name: "Huǒ · Fire (火)",  color: "#FF6B35" },
+      { icon: "土", glyphScale: 1.11, alchemyKind: "earth",  name: "Tǔ · Earth (土)",  color: "#FBBF24" },
+      { icon: "金", glyphScale: 1.09, alchemyKind: "air",    name: "Jīn · Metal (金)", color: "#E2E8F0" },
+      { icon: "水", glyphScale: 1.07, alchemyKind: "water",  name: "Shuǐ · Water (水)", color: "#38BDF8" }
+    ]
+  })
+
+  function elementForSlot(slot, styleName) {
+    var list = root.packs[styleName] || root.packs.elements
+    var idx = ((slot - 1) % list.length + list.length) % list.length
+    return list[idx]
   }
 
   property string activeMode: "dwindle"
@@ -291,8 +318,9 @@ BarWidget {
         readonly property bool occupied: workspace !== null && workspace.toplevels.values.length > 0
         readonly property bool shown: root.monitor !== null && root.monitor.activeWorkspace !== null && root.monitor.activeWorkspace.id === modelData
         readonly property int slot: root.slotOf(modelData)
-        readonly property var element: root.elementForSlot(slot)
+        readonly property var element: root.elementForSlot(slot, root.iconStyle)
         readonly property bool useAlchemy: root.iconStyle === "alchemy"
+        readonly property bool isCjk: root.iconStyle === "godai" || root.iconStyle === "wuxing"
         readonly property bool firstGuest: root.blockOf(modelData) !== root.block && index > 0 && root.blockOf(root.workspaceIds()[index - 1]) === root.block
         required property int index
 
@@ -324,7 +352,7 @@ BarWidget {
         }
         onWheelMoved: function(delta) { root.scrollWorkspaces(delta) }
 
-        // Uniform-size Nerd Font elemental glyph renderer (exact 12px ink height across all 5 elements).
+        // Uniform-size glyph/kanji renderer (exact 12px ink height across elements, godai, and wuxing).
         Text {
           visible: !wsBtn.useAlchemy
           anchors.centerIn: parent
@@ -332,7 +360,8 @@ BarWidget {
           textFormat: Text.PlainText
           text: wsBtn.element.icon
           color: wsBtn.element.color
-          font.family: root.bar ? root.bar.fontFamily : Style.font.family
+          font.family: wsBtn.isCjk ? "Noto Sans CJK JP" : (root.bar ? root.bar.fontFamily : Style.font.family)
+          font.weight: wsBtn.isCjk ? Font.DemiBold : Font.Normal
           font.pixelSize: Math.round(root.uniformIconSize * wsBtn.element.glyphScale)
           renderType: Text.CurveRendering
           horizontalAlignment: Text.AlignHCenter
@@ -340,7 +369,7 @@ BarWidget {
           scale: wsBtn.pressScale
         }
 
-        // Uniform-size vector Alchemical symbol renderer (exact 12px outer bounds matching the elemental glyphs).
+        // Uniform-size vector Alchemical symbol renderer (exact 12px outer bounds matching the other packs).
         Canvas {
           id: alchemyCanvas
           visible: wsBtn.useAlchemy
@@ -462,7 +491,7 @@ BarWidget {
     bar: root.bar
     open: root.pickerOpen
     onOpenChanged: if (!open) root.pickerOpen = false
-    contentWidth: Style.space(260)
+    contentWidth: Style.space(280)
     contentHeight: styleColumn.implicitHeight + padding * 2
 
     ColumnLayout {
@@ -493,6 +522,22 @@ BarWidget {
         text: "🜂 🜄 🜃 🜁 ✧   Alchemical Symbols"
         selected: root.iconStyle === "alchemy"
         onClicked: root.selectStyle("alchemy")
+      }
+
+      Button {
+        Layout.fillWidth: true
+        bordered: true
+        text: "地 水 火 風 空   Japanese Godai"
+        selected: root.iconStyle === "godai"
+        onClicked: root.selectStyle("godai")
+      }
+
+      Button {
+        Layout.fillWidth: true
+        bordered: true
+        text: "木 火 土 金 水   Chinese Wu Xing"
+        selected: root.iconStyle === "wuxing"
+        onClicked: root.selectStyle("wuxing")
       }
     }
   }
