@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "id": "elemental-workspace-indicator",
   "name": "Elemental Workspace Indicator",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "author": "makehasteslowly",
   "license": "MIT",
   "homepage": "https://github.com/makehasteslowly/omarchy-five-elements-workspaces",
-  "description": "Hyprland workspace indicators for Omarchy with 4 selectable 5-element traditions (Elemental Icons, Alchemical Symbols, Japanese Godai, Chinese Wu Xing) and resizable live floating workspace window previews.",
+  "description": "Hyprland workspace indicators for Omarchy with 4 selectable 5-element traditions (Elemental Icons, Alchemical Symbols, Japanese Godai, Chinese Wu Xing), resizable live floating workspace window previews, and notification workspace blinking.",
   "kinds": [
     "bar-widget"
   ],

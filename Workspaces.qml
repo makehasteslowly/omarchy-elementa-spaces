@@ -52,6 +52,183 @@ BarWidget {
   property Item hoveredAnchorItem: null
   property bool previewOpen: false
 
+  // Notification & urgent workspace blink state
+  property var blinkingWorkspaces: ({})
+  property var seenNotificationKeys: ({})
+  property bool liveNotifsInitialized: false
+  property bool blinkPhase: false
+
+  Timer {
+    id: blinkTimer
+    interval: 520
+    repeat: true
+    running: root.hasAnyBlinkingWorkspace()
+    onTriggered: root.blinkPhase = !root.blinkPhase
+    onRunningChanged: if (!running) root.blinkPhase = false
+  }
+
+  function hasAnyBlinkingWorkspace() {
+    for (var k in root.blinkingWorkspaces) {
+      if (root.blinkingWorkspaces[k]) return true
+    }
+    var values = Hyprland.workspaces.values
+    for (var i = 0; i < values.length; i++) {
+      if (values[i].urgent && values[i].id !== root.activeWorkspaceId()) return true
+    }
+    return false
+  }
+
+  function markWorkspaceBlinking(wsId) {
+    if (wsId <= 0 || wsId === root.activeWorkspaceId()) return
+    if (root.blinkingWorkspaces[wsId]) return
+    var next = Object.assign({}, root.blinkingWorkspaces)
+    next[wsId] = true
+    root.blinkingWorkspaces = next
+  }
+
+  function clearWorkspaceBlink(wsId) {
+    if (!root.blinkingWorkspaces[wsId]) return
+    var next = Object.assign({}, root.blinkingWorkspaces)
+    delete next[wsId]
+    root.blinkingWorkspaces = next
+  }
+
+  function isWorkspaceNotified(wsId) {
+    if (wsId <= 0 || wsId === root.activeWorkspaceId()) return false
+    if (root.blinkingWorkspaces[wsId]) return true
+    var ws = root.workspaceById(wsId)
+    if (!ws) return false
+    if (ws.urgent) return true
+    if (ws.toplevels && ws.toplevels.values) {
+      var list = ws.toplevels.values
+      for (var i = 0; i < list.length; i++) {
+        if (list[i] && list[i].urgent) return true
+      }
+    }
+    return false
+  }
+
+  function matchNotificationWorkspace(entry) {
+    if (!entry) return -1
+    var app = String(entry.app || "").toLowerCase().trim()
+    var source = String(entry.source || "").toLowerCase().trim()
+    var pid = Number(entry.senderPid || 0)
+    if (app === "omarchy-action" || app === "omasnap" || entry.transient) return -1
+
+    var list = Hyprland.toplevels ? Hyprland.toplevels.values : []
+    if (!list || list.length === 0) return -1
+
+    var activeWs = root.activeWorkspaceId()
+    var i, ipc, wmClass, title, wsId
+
+    // 1. Exact sender PID match
+    if (pid > 0) {
+      for (i = 0; i < list.length; i++) {
+        ipc = list[i].lastIpcObject
+        if (ipc && Number(ipc.pid || 0) === pid && list[i].workspace) {
+          return list[i].workspace.id
+        }
+      }
+    }
+
+    // 2. Domain/source match against PWA class or browser tab title (e.g., "messages.google.com" -> "messages")
+    var browserRe = /(brave|chrome|chromium|firefox|zen|vivaldi|edge|helium)/
+    var genericWords = { www: 1, app: 1, web: 1, mail: 1, google: 1, com: 1, org: 1, net: 1, io: 1, co: 1, dev: 1, ai: 1 }
+
+    if (source.indexOf(".") > 0) {
+      // Check if a standalone PWA window class contains the source host
+      for (i = 0; i < list.length; i++) {
+        if (!list[i].workspace) continue
+        ipc = list[i].lastIpcObject
+        wmClass = String((ipc && ipc["class"]) || (list[i].wayland && list[i].wayland.appId) || "").toLowerCase()
+        if (wmClass.indexOf(source) >= 0) return list[i].workspace.id
+      }
+
+      // Check browser window titles for brand keywords from the source domain
+      var parts = source.split(".")
+      for (var p = 0; p < parts.length; p++) {
+        var brand = parts[p]
+        if (brand.length < 3 || genericWords[brand]) continue
+        for (i = 0; i < list.length; i++) {
+          if (!list[i].workspace) continue
+          ipc = list[i].lastIpcObject
+          wmClass = String((ipc && ipc["class"]) || (list[i].wayland && list[i].wayland.appId) || "").toLowerCase()
+          title = String(list[i].title || (ipc && ipc.title) || "").toLowerCase()
+          if (browserRe.test(wmClass) && title.indexOf(brand) >= 0) {
+            return list[i].workspace.id
+          }
+        }
+      }
+    }
+
+    // 3. Fallback: Match by application name (e.g., "Brave Origin" -> "brave", "Slack" -> "slack"),
+    // preferring windows on inactive workspaces so background tabs on another workspace blink that workspace.
+    var appToken = app.split(/[\s-_]+/)[0].replace(/[^a-z0-9]/g, "")
+    if (appToken.length >= 3) {
+      var fallbackWs = -1
+      for (i = 0; i < list.length; i++) {
+        if (!list[i].workspace) continue
+        wsId = list[i].workspace.id
+        ipc = list[i].lastIpcObject
+        wmClass = String((ipc && ipc["class"]) || (list[i].wayland && list[i].wayland.appId) || "").toLowerCase()
+        if (wmClass.indexOf(appToken) >= 0) {
+          if (wsId !== activeWs && wsId > 0) return wsId
+          if (fallbackWs === -1) fallbackWs = wsId
+        }
+      }
+      if (fallbackWs > 0) return fallbackWs
+    }
+
+    return -1
+  }
+
+  function processLiveNotifications(text) {
+    var raw = String(text || "").trim()
+    var entries = []
+    if (raw.length > 0) {
+      try {
+        var parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) entries = parsed
+      } catch (e) {
+        entries = []
+      }
+    }
+
+    if (!root.liveNotifsInitialized) {
+      var initialSeen = {}
+      for (var i = 0; i < entries.length; i++) {
+        if (entries[i] && entries[i].key) initialSeen[entries[i].key] = true
+      }
+      root.seenNotificationKeys = initialSeen
+      root.liveNotifsInitialized = true
+      return
+    }
+
+    var nextSeen = Object.assign({}, root.seenNotificationKeys)
+    for (var j = 0; j < entries.length; j++) {
+      var entry = entries[j]
+      if (!entry || !entry.key) continue
+      var key = String(entry.key)
+      if (!nextSeen[key]) {
+        nextSeen[key] = true
+        var targetWs = root.matchNotificationWorkspace(entry)
+        if (targetWs > 0 && targetWs !== root.activeWorkspaceId()) {
+          root.markWorkspaceBlinking(targetWs)
+        }
+      }
+    }
+    root.seenNotificationKeys = nextSeen
+  }
+
+  FileView {
+    path: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/omarchy/notifications/live.json"
+    watchChanges: true
+    printErrors: false
+    onFileChanged: reload()
+    onLoaded: root.processLiveNotifications(text())
+    onLoadFailed: root.processLiveNotifications("[]")
+  }
+
   function close() {
     root.pickerOpen = false
   }
@@ -188,6 +365,7 @@ BarWidget {
 
   function focusWindow(toplevelObj, workspaceId) {
     root.previewOpen = false
+    if (workspaceId > 0) root.clearWorkspaceBlink(workspaceId)
     if (!toplevelObj) {
       if (workspaceId > 0) root.focusWorkspace(workspaceId)
       return
@@ -368,7 +546,11 @@ BarWidget {
 
   Connections {
     target: root.monitor
-    function onActiveWorkspaceChanged() { root.showActiveMode() }
+    function onActiveWorkspaceChanged() {
+      root.showActiveMode()
+      var activeId = root.activeWorkspaceId()
+      if (activeId > 0) root.clearWorkspaceBlink(activeId)
+    }
   }
 
   Connections {
@@ -380,8 +562,10 @@ BarWidget {
       if (switched || name === "moveworkspacev2" || name === "changeworkspaceid") {
         Hyprland.refreshMonitors()
         Hyprland.refreshWorkspaces()
+        var activeId = root.activeWorkspaceId()
+        if (activeId > 0) root.clearWorkspaceBlink(activeId)
       }
-      if (name === "openwindow" || name === "closewindow" || name === "movewindow" || name === "movewindowv2") {
+      if (name === "openwindow" || name === "closewindow" || name === "movewindow" || name === "movewindowv2" || name === "urgent") {
         Hyprland.refreshWorkspaces()
         Hyprland.refreshToplevels()
       }
@@ -434,6 +618,7 @@ BarWidget {
         readonly property var workspace: root.workspaceById(modelData)
         readonly property bool occupied: workspace !== null && workspace.toplevels.values.length > 0
         readonly property bool shown: root.monitor !== null && root.monitor.activeWorkspace !== null && root.monitor.activeWorkspace.id === modelData
+        readonly property bool notified: !shown && root.isWorkspaceNotified(modelData)
         readonly property int slot: root.slotOf(modelData)
         readonly property var element: root.elementForSlot(slot, root.iconStyle)
         readonly property bool useAlchemy: root.iconStyle === "alchemy"
@@ -451,7 +636,11 @@ BarWidget {
         active: shown
         activeColor: element.color
         foreground: element.color
-        opacity: shown ? 1.0 : (occupied ? 0.78 : 0.4)
+        opacity: shown
+          ? 1.0
+          : (notified
+            ? (root.blinkPhase ? 1.0 : 0.25)
+            : (occupied ? 0.78 : 0.4))
         // Only show plain bar tooltip when floating preview is disabled
         tooltipText: root.showPreview ? "" : (shown
           ? (slot + " · " + element.name + " (" + root.activeMode + ") · Right-click: style")
@@ -471,10 +660,16 @@ BarWidget {
             return
           }
           root.previewOpen = false
+          root.clearWorkspaceBlink(modelData)
           if (shown) root.cycleLayout()
           else root.focusWorkspace(modelData)
         }
         onWheelMoved: function(delta) { root.scrollWorkspaces(delta) }
+
+        readonly property real blinkScale: notified ? (root.blinkPhase ? 1.12 : 0.94) : 1.0
+        Behavior on blinkScale {
+          NumberAnimation { duration: Style.duration(240); easing.type: Easing.OutCubic }
+        }
 
         // Uniform-size glyph/kanji renderer (exact 12px ink height across elements, godai, and wuxing).
         Text {
@@ -490,7 +685,7 @@ BarWidget {
           renderType: Text.CurveRendering
           horizontalAlignment: Text.AlignHCenter
           verticalAlignment: Text.AlignVCenter
-          scale: wsBtn.pressScale
+          scale: wsBtn.pressScale * wsBtn.blinkScale
         }
 
         // Uniform-size vector Alchemical symbol renderer (exact 12px outer bounds matching the other packs).
@@ -501,7 +696,7 @@ BarWidget {
           height: 16
           anchors.centerIn: parent
           anchors.verticalCenterOffset: -1
-          scale: wsBtn.pressScale
+          scale: wsBtn.pressScale * wsBtn.blinkScale
           antialiasing: true
 
           property string kind: wsBtn.element.alchemyKind
@@ -596,6 +791,23 @@ BarWidget {
           }
           Behavior on scale {
             NumberAnimation { duration: Style.duration(180); easing.type: Easing.Bezier; easing.bezierCurve: Style.easeOut }
+          }
+        }
+
+        // Pulsing notification dot in the top-right corner when an inactive workspace has a pending notification
+        Rectangle {
+          width: 4
+          height: 4
+          radius: 2
+          color: wsBtn.element.color
+          anchors.top: parent.top
+          anchors.topMargin: 3
+          anchors.right: parent.right
+          anchors.rightMargin: 3
+          opacity: wsBtn.notified ? (root.blinkPhase ? 1.0 : 0.2) : 0
+
+          Behavior on opacity {
+            NumberAnimation { duration: Style.duration(220); easing.type: Easing.OutCubic }
           }
         }
       }
