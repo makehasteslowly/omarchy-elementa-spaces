@@ -10,11 +10,35 @@ BarWidget {
   id: root
   moduleName: "omarchy.workspaces"
 
-  // Every monitor has workspaces 1-10 of its own, which Hyprland numbers in a
-  // block of ten per monitor: 1-10, 11-20, and so on (see
-  // default/hypr/monitor-workspaces.lua). Each bar shows its own monitor's block,
-  // numbered 1-10, and the one that monitor shows, whichever monitor has focus.
   readonly property int slots: 10
+  readonly property string pluginId: "elemental-workspace-indicator"
+
+  // "elements" (Nerd Font elemental glyphs) or "alchemy" (Alchemical geometric symbols).
+  property string localStyleOverride: ""
+  readonly property string configuredStyle: root.settings && root.settings.style !== undefined && root.settings.style !== null
+    ? String(root.settings.style)
+    : ""
+  readonly property string iconStyle: root.localStyleOverride !== ""
+    ? root.localStyleOverride
+    : (root.configuredStyle === "alchemy" ? "alchemy" : "elements")
+
+  property bool pickerOpen: false
+  property bool initialPromptShown: false
+
+  function selectStyle(nextStyle) {
+    var normalized = nextStyle === "alchemy" ? "alchemy" : "elements"
+    root.localStyleOverride = normalized
+    root.pickerOpen = false
+    if (root.bar) {
+      root.bar.run("omarchy-bar set " + Util.shellQuote(root.pluginId) + " style " + Util.shellQuote(normalized))
+    }
+  }
+
+  onConfiguredStyleChanged: {
+    if (root.configuredStyle !== "") {
+      root.localStyleOverride = ""
+    }
+  }
 
   readonly property var monitor: {
     var window = root.QsWindow.window
@@ -57,8 +81,6 @@ BarWidget {
     return root.monitor && root.monitor.activeWorkspace ? root.monitor.activeWorkspace.id : -1
   }
 
-  // Until Hyprland has written the file, the workspace a monitor shows is in
-  // its own block.
   readonly property int block: {
     var block = root.blocks[root.monitorName]
     if (block !== undefined) return block
@@ -71,13 +93,9 @@ BarWidget {
     for (var i = 0; i < values.length; i++) {
       if (values[i].id === id) return values[i]
     }
-
     return null
   }
 
-  // The first five of the monitor's own, and any of the rest that exist. After
-  // them come workspaces that are only visiting: those of a monitor that is
-  // unplugged, which had no room to join this one's.
   function workspaceIds() {
     var base = root.block * root.slots
     var ids = [base + 1, base + 2, base + 3, base + 4, base + 5]
@@ -111,8 +129,6 @@ BarWidget {
     }
   }
 
-  // A wheel notch moves one entry along the row, and a touchpad adds up its
-  // smaller deltas until they make a notch's worth.
   property real wheelAccumulator: 0
 
   function scrollWorkspaces(delta) {
@@ -120,8 +136,6 @@ BarWidget {
     root.wheelAccumulator = wheel.remainder
     if (wheel.steps === 0) return
 
-    // Holds at either end rather than wrapping, so a touchpad swipe that runs
-    // long stops on the last workspace.
     var ids = root.workspaceIds()
     var index = ids.indexOf(root.activeWorkspaceId())
     if (index === -1) return
@@ -131,11 +145,11 @@ BarWidget {
 
   // The 5 elements mapped across workspace slots (1-5, repeating for 6-10).
   readonly property var elements: [
-    { icon: "󰈸", name: "Fire",   color: "#FF6B35" },
-    { icon: "󰖌", name: "Water",  color: "#38BDF8" },
-    { icon: "󰌪", name: "Earth",  color: "#4ADE80" },
-    { icon: "󰖝", name: "Air",    color: "#67E8F9" },
-    { icon: "󱐋", name: "Aether", color: "#C084FC" }
+    { icon: "󰈸", alchemySymbol: "🜂", alchemyKind: "fire",   name: "Fire",   color: "#FF6B35" },
+    { icon: "󰖌", alchemySymbol: "🜄", alchemyKind: "water",  name: "Water",  color: "#38BDF8" },
+    { icon: "󰌪", alchemySymbol: "🜃", alchemyKind: "earth",  name: "Earth",  color: "#4ADE80" },
+    { icon: "󰖝", alchemySymbol: "🜁", alchemyKind: "air",    name: "Air",    color: "#67E8F9" },
+    { icon: "󱐋", alchemySymbol: "✧",  alchemyKind: "aether", name: "Aether", color: "#C084FC" }
   ]
 
   function elementForSlot(slot) {
@@ -143,9 +157,6 @@ BarWidget {
     return root.elements[idx]
   }
 
-  // The workspace each monitor shows carries its layout: a square tiles, a
-  // circle scrolls, and a triangle floats. Clicking it cycles to the next one,
-  // as Super + L does.
   property string activeMode: "dwindle"
   property bool modeStale: false
 
@@ -155,9 +166,6 @@ BarWidget {
     return "󱓻"
   }
 
-  // A layout only changes through the layout commands, which ask for a refresh,
-  // or a config reload, so each workspace's mode is read once and cached rather
-  // than running the script on every workspace switch.
   property var modeCache: ({})
   property int modeGeneration: 0
   property int modeProcWorkspace: -1
@@ -188,8 +196,6 @@ BarWidget {
     readMode()
   }
 
-  // The layout commands act on the focused workspace, so a click on another
-  // monitor's bar focuses that monitor first.
   function cycleLayout() {
     if (!root.bar) return
     var command = "omarchy-hyprland-workspace-layout-toggle"
@@ -199,8 +205,24 @@ BarWidget {
     root.bar.run(command)
   }
 
-  Component.onCompleted: refresh()
+  Component.onCompleted: {
+    refresh()
+    initialPromptTimer.start()
+  }
   onMonitorChanged: root.showActiveMode()
+
+  // Show the style picker automatically on first install when no style is stored in shell.json yet.
+  Timer {
+    id: initialPromptTimer
+    interval: 600
+    repeat: false
+    onTriggered: {
+      if (!root.initialPromptShown && root.configuredStyle === "" && (!root.monitor || root.monitor.focused)) {
+        root.initialPromptShown = true
+        root.pickerOpen = true
+      }
+    }
+  }
 
   Connections {
     target: root.monitor
@@ -212,12 +234,6 @@ BarWidget {
     function onRawEvent(event) {
       var name = event ? String(event.name) : ""
       if (name === "configreloaded") root.refresh()
-      // Quickshell credits every workspace switch to the focused monitor, as
-      // the event doesn't say which one switched, and misses the workspace a
-      // monitor falls back to when its own is moved away. Moving workspaces
-      // between monitors switches the others, so ask Hyprland for the truth.
-      // A workspace that changes number is only learned by asking too. Every
-      // bar shares what Hyprland answers, so one asks after a plain switch.
       var switched = name === "workspacev2" && root.monitor !== null && root.monitor.focused
       if (switched || name === "moveworkspacev2" || name === "changeworkspaceid") {
         Hyprland.refreshMonitors()
@@ -231,7 +247,6 @@ BarWidget {
     stdout: StdioCollector {
       onStreamFinished: {
         var mode = text.trim()
-        // A read that started before a refresh may predate the change.
         if (!mode || root.modeProcGeneration !== root.modeGeneration) return
         root.modeCache[root.modeProcWorkspace] = mode
         if (root.modeProcWorkspace === root.activeWorkspaceId()) root.activeMode = mode
@@ -240,13 +255,10 @@ BarWidget {
     onExited: {
       if (!root.modeStale) return
       root.modeStale = false
-      // Deferred: the process still reports running while it signals exit.
       Qt.callLater(root.showActiveMode)
     }
   }
 
-  // Super + L and the default layout change the mode without a focus change,
-  // so they ask every bar to read it again.
   ShellIpc {
     target: "omarchy.workspaces"
 
@@ -278,32 +290,123 @@ BarWidget {
         readonly property bool shown: root.monitor !== null && root.monitor.activeWorkspace !== null && root.monitor.activeWorkspace.id === modelData
         readonly property int slot: root.slotOf(modelData)
         readonly property var element: root.elementForSlot(slot)
-        readonly property color mutedColor: root.bar ? root.bar.barForeground : Color.foreground
+        readonly property bool useAlchemy: root.iconStyle === "alchemy"
         readonly property bool firstGuest: root.blockOf(modelData) !== root.block && index > 0 && root.blockOf(root.workspaceIds()[index - 1]) === root.block
         required property int index
 
-        // A gap sets visiting workspaces apart from the monitor's own.
         Layout.leftMargin: firstGuest && !root.vertical ? Style.space(6) : 0
         Layout.topMargin: firstGuest && root.vertical ? Style.space(6) : 0
 
         bar: root.bar
         text: element.icon
+        labelVisible: !useAlchemy
+        hasVisualContent: true
         active: shown
         activeColor: element.color
         foreground: element.color
         opacity: shown ? 1.0 : (occupied ? 0.78 : 0.4)
         tooltipText: shown
-          ? (slot + " · " + element.name + " (" + root.activeMode + ")")
-          : (slot + " · " + element.name)
+          ? (slot + " · " + element.name + " (" + root.activeMode + ") · Right-click: style")
+          : (slot + " · " + element.name + " · Right-click: style")
         horizontalMargin: 6
         verticalPadding: 6
         fixedWidth: root.vertical ? root.barSize : Style.space(22)
         fixedHeight: root.barSize
-        onPressed: function() {
+        onPressed: function(button) {
+          if (button === Qt.RightButton) {
+            root.pickerOpen = !root.pickerOpen
+            return
+          }
           if (shown) root.cycleLayout()
           else root.focusWorkspace(modelData)
         }
         onWheelMoved: function(delta) { root.scrollWorkspaces(delta) }
+
+        // Crisp vector Alchemical symbol renderer when "alchemy" style is active.
+        Canvas {
+          id: alchemyCanvas
+          visible: wsBtn.useAlchemy
+          width: Style.bar.iconCanvas
+          height: Style.bar.iconCanvas
+          anchors.centerIn: parent
+          scale: wsBtn.pressScale
+          antialiasing: true
+
+          property string kind: wsBtn.element.alchemyKind
+          property color strokeColor: wsBtn.element.color
+
+          onKindChanged: requestPaint()
+          onStrokeColorChanged: requestPaint()
+          onWidthChanged: requestPaint()
+          onHeightChanged: requestPaint()
+
+          onPaint: {
+            var ctx = getContext("2d")
+            ctx.reset()
+            var w = width
+            var h = height
+            var pad = Math.max(2, w * 0.14)
+            var left = pad
+            var right = w - pad
+            var top = pad
+            var bottom = h - pad
+            var midX = w / 2
+            var midY = h / 2
+
+            ctx.strokeStyle = String(strokeColor)
+            ctx.lineWidth = Math.max(1.45, w * 0.1)
+            ctx.lineJoin = "round"
+            ctx.lineCap = "round"
+
+            if (kind === "fire" || kind === "air") {
+              // Upward triangle △
+              ctx.beginPath()
+              ctx.moveTo(midX, top)
+              ctx.lineTo(right, bottom)
+              ctx.lineTo(left, bottom)
+              ctx.closePath()
+              ctx.stroke()
+              if (kind === "air") {
+                // Horizontal crossbar for Air 🜁
+                var barY = top + (bottom - top) * 0.48
+                ctx.beginPath()
+                ctx.moveTo(left + (right - left) * 0.12, barY)
+                ctx.lineTo(right - (right - left) * 0.12, barY)
+                ctx.stroke()
+              }
+            } else if (kind === "water" || kind === "earth") {
+              // Downward triangle ▽
+              ctx.beginPath()
+              ctx.moveTo(left, top)
+              ctx.lineTo(right, top)
+              ctx.lineTo(midX, bottom)
+              ctx.closePath()
+              ctx.stroke()
+              if (kind === "earth") {
+                // Horizontal crossbar for Earth 🜃
+                var eBarY = top + (bottom - top) * 0.52
+                ctx.beginPath()
+                ctx.moveTo(left + (right - left) * 0.12, eBarY)
+                ctx.lineTo(right - (right - left) * 0.12, eBarY)
+                ctx.stroke()
+              }
+            } else {
+              // Aether / Quintessence 4-pointed star ✧
+              var inner = (right - left) * 0.18
+              ctx.beginPath()
+              ctx.moveTo(midX, top)
+              ctx.lineTo(midX + inner, midY - inner)
+              ctx.lineTo(right, midY)
+              ctx.lineTo(midX + inner, midY + inner)
+              ctx.lineTo(midX, bottom)
+              ctx.lineTo(midX - inner, midY + inner)
+              ctx.lineTo(left, midY)
+              ctx.lineTo(midX - inner, midY - inner)
+              ctx.closePath()
+              ctx.stroke()
+            }
+          }
+        }
 
         Rectangle {
           width: root.vertical ? 2 : 10
@@ -326,6 +429,48 @@ BarWidget {
             NumberAnimation { duration: Style.duration(180); easing.type: Easing.Bezier; easing.bezierCurve: Style.easeOut }
           }
         }
+      }
+    }
+  }
+
+  // Style selector popup (opens automatically on initial install when style is unset, or on right-click).
+  PopupCard {
+    id: stylePopup
+    anchorItem: root
+    bar: root.bar
+    open: root.pickerOpen
+    onOpenChanged: if (!open) root.pickerOpen = false
+    contentWidth: Style.space(260)
+    contentHeight: styleColumn.implicitHeight + padding * 2
+
+    ColumnLayout {
+      id: styleColumn
+      anchors.fill: parent
+      spacing: Style.space(8)
+
+      Text {
+        textFormat: Text.PlainText
+        text: "Workspace Symbol Style"
+        color: Color.foreground
+        font.family: Style.font.family
+        font.pixelSize: Style.font.body
+        font.bold: true
+      }
+
+      Button {
+        Layout.fillWidth: true
+        bordered: true
+        text: "󰈸 󰖌 󰌪 󰖝 󱐋   Elemental Icons"
+        selected: root.iconStyle === "elements"
+        onClicked: root.selectStyle("elements")
+      }
+
+      Button {
+        Layout.fillWidth: true
+        bordered: true
+        text: "🜂 🜄 🜃 🜁 ✧   Alchemical Symbols"
+        selected: root.iconStyle === "alchemy"
+        onClicked: root.selectStyle("alchemy")
       }
     }
   }
