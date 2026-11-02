@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "elemental-workspace-indicator",
+  "name": "Elemental Workspace Indicator",
+  "version": "1.0.0",
+  "author": "makehasteslowly",
+  "license": "MIT",
+  "homepage": "https://github.com/makehasteslowly/omarchy-five-elements-workspaces",
+  "description": "Hyprland workspace indicators for Omarchy using the symbols and colors of the 5 elements.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Workspaces.qml"
+  },
+  "barWidget": {
+    "displayName": "Elemental Workspace Indicator",
+    "description": "Workspace indicators using the symbols of the 5 elements",
+    "category": "Compositor",
+    "allowMultiple": false,
+    "defaultSection": "left"
+  },
+  "omarchy": {
+    "clonedFrom": "omarchy.workspaces"
+  }
+}
