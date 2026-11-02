@@ -26,15 +26,25 @@ A Hyprland workspace indicator bar widget for [Omarchy](https://omarchy.org/) th
 
 ## Element & Color Maps
 
-### 1. Elemental Icons (`elements`) & 2. Alchemical Symbols (`alchemy`)
+### 1. Elemental Icons (`elements`)
 
-| Workspace | Element | Elemental Icon (`elements`) | Alchemical Symbol (`alchemy`) | Hex Color |
+| Workspace | Element | Symbol | Codepoint | Hex Color |
 | :---: | :--- | :---: | :---: | :--- |
-| **1** *(6)* | **Fire** | `󰈸` (`U+F0238`) | `🜂` (`△`) | `#FF6B35` (Fiery Orange-Red) |
-| **2** *(7)* | **Water** | `󰖌` (`U+F058C`) | `🜄` (`▽`) | `#38BDF8` (Water Blue) |
-| **3** *(8)* | **Earth** | `󰌪` (`U+F032A`) | `🜃` (`▽` + crossbar) | `#4ADE80` (Leaf Green) |
-| **4** *(9)* | **Air** | `󰖝` (`U+F059D`) | `🜁` (`△` + crossbar) | `#67E8F9` (Wind Cyan) |
-| **5** *(10)* | **Aether** | `󱐋` (`U+F140B`) | `✧` (Quintessence star) | `#C084FC` (Aether Purple) |
+| **1** *(6)* | **Fire** | `󰈸` | `U+F0238` | `#FF6B35` (Fiery Orange-Red) |
+| **2** *(7)* | **Water** | `󰖌` | `U+F058C` | `#38BDF8` (Water Blue) |
+| **3** *(8)* | **Earth** | `󰌪` | `U+F032A` | `#4ADE80` (Leaf Green) |
+| **4** *(9)* | **Air** | `󰖝` | `U+F059D` | `#67E8F9` (Wind Cyan) |
+| **5** *(10)* | **Aether** | `󱐋` | `U+F140B` | `#C084FC` (Aether Purple) |
+
+### 2. Alchemical Symbols (`alchemy`)
+
+| Workspace | Element | Symbol | Geometry | Hex Color |
+| :---: | :--- | :---: | :--- | :--- |
+| **1** *(6)* | **Fire** | `🜂` | `△` (Upward triangle) | `#FF6B35` (Fiery Orange-Red) |
+| **2** *(7)* | **Water** | `🜄` | `▽` (Downward triangle) | `#38BDF8` (Water Blue) |
+| **3** *(8)* | **Earth** | `🜃` | `▽` + crossbar | `#4ADE80` (Leaf Green) |
+| **4** *(9)* | **Air** | `🜁` | `△` + crossbar | `#67E8F9` (Wind Cyan) |
+| **5** *(10)* | **Aether** | `✧` | Quintessence star | `#C084FC` (Aether Purple) |
 
 ### 3. Japanese Godai (`godai`, 五代)
 
