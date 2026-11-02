@@ -26,6 +26,11 @@ BarWidget {
 
   property bool pickerOpen: false
   property bool initialPromptShown: false
+  readonly property var styleOrder: ["elements", "alchemy", "godai", "wuxing"]
+
+  function close() {
+    root.pickerOpen = false
+  }
 
   function selectStyle(nextStyle) {
     var normalized = (nextStyle === "alchemy" || nextStyle === "godai" || nextStyle === "wuxing")
@@ -34,6 +39,16 @@ BarWidget {
     root.pickerOpen = false
     if (root.bar) {
       root.bar.run("omarchy-bar set " + Util.shellQuote(root.pluginId) + " style " + Util.shellQuote(normalized))
+    }
+  }
+
+  function cycleStyle() {
+    var currentIndex = root.styleOrder.indexOf(root.iconStyle)
+    var nextStyle = root.styleOrder[(currentIndex + 1) % root.styleOrder.length]
+    root.localStyleOverride = nextStyle
+    root.pickerOpen = true
+    if (root.bar) {
+      root.bar.run("omarchy-bar set " + Util.shellQuote(root.pluginId) + " style " + Util.shellQuote(nextStyle))
     }
   }
 
@@ -344,7 +359,7 @@ BarWidget {
         fixedHeight: root.barSize
         onPressed: function(button) {
           if (button === Qt.RightButton) {
-            root.pickerOpen = !root.pickerOpen
+            root.cycleStyle()
             return
           }
           if (shown) root.cycleLayout()
@@ -487,10 +502,10 @@ BarWidget {
   // Style selector popup (opens automatically on initial install when style is unset, or on right-click).
   PopupCard {
     id: stylePopup
+    owner: root
     anchorItem: root
     bar: root.bar
     open: root.pickerOpen
-    onOpenChanged: if (!open) root.pickerOpen = false
     contentWidth: Style.space(280)
     contentHeight: styleColumn.implicitHeight + padding * 2
 
