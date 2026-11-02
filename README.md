@@ -1,6 +1,6 @@
 # Elemental Workspace Indicator (`elemental-workspace-indicator`)
 
-A Hyprland workspace indicator bar widget for [Omarchy](https://omarchy.org/) that represents your workspaces with the symbols and elemental colors of the **Five Elements** across **4 selectable traditions** — plus a **resizable live floating workspace preview window** (`Small`, `Medium`, `Large`, or `Off`) on hover:
+A Hyprland workspace indicator bar widget for [Omarchy](https://omarchy.org/) that represents your workspaces with the symbols and elemental colors of the **Five Elements** across **4 selectable traditions** — complete with **notification workspace & window blinking (`Notif Blink`: `Slow` / `Med` / `Fast` / `Off`)** and a **resizable live floating workspace preview window** (`Small`, `Medium`, `Large`, or `Off`) on hover:
 
 1. **Elemental Icons (`elements`)** — `󰈸 󰖌 󰌪 󰖝 󱐋` (Fire, Water, Earth, Air, Aether)
 2. **Alchemical Symbols (`alchemy`)** — `🜂 🜄 🜃 🜁 ✧` (Classical Alchemical Geometry)
@@ -17,12 +17,25 @@ A Hyprland workspace indicator bar widget for [Omarchy](https://omarchy.org/) th
 
 | Action | Behavior |
 | :--- | :--- |
-| **Hover** any workspace icon | Opens the **Floating Workspace Preview** (`Small` / `Medium` / `Large`) showing live Wayland window thumbnails (`ScreencopyView`) and titles for that workspace |
+| **Hover** any workspace icon | Opens the **Floating Workspace Preview** (`Small` / `Medium` / `Large`) showing live Wayland window thumbnails (`ScreencopyView`) and pulsing notification highlights for that workspace |
 | **Click** a window card in preview | Switches directly to that workspace and focuses that exact window |
-| **Left-Click** an inactive workspace | Switches to that workspace |
+| **Left-Click** an inactive workspace | Switches to that workspace (and clears any active notification blink) |
 | **Left-Click** the active workspace | Cycles the workspace's Hyprland layout (`dwindle` → `scrolling` → `floating`) |
 | **Right-Click** any workspace icon | Cycles the symbol style and opens the **Style, Preview Size (`Off` / `S` / `M` / `L`), and Notif Blink (`Off` / `Slow` / `Med` / `Fast`)** popup |
 | **Scroll Wheel** over widget | Scrolls through workspaces on the current monitor |
+
+## Notification Blink (`Notif Blink`) & Preview Highlight
+
+Never miss a message on an inactive workspace:
+
+- **Bar Indicator Breathing Pulse:** When an app, standalone PWA, or browser tab on an inactive workspace receives a notification, that workspace's elemental icon on the bar smoothly pulses in brightness until you switch to that workspace.
+- **Preview Window Card Highlight:** Hovering over a blinking workspace highlights the exact window that triggered the notification — pulsing its **360° elemental border** and **bottom title strip (`󰂚`)** in sync with the bar icon.
+- **Adjustable Blink Speed (`Notif Blink`):** Right-click the widget to choose between **`Slow`** (gentle breathing fade), **`Med`** (balanced pulse), **`Fast`** (brisk pulse), or **`Off`**.
+- **Multi-Workspace, PWA & Browser Tab-Aware:**
+  - Tracks system notifications, Wayland urgent window signals, and standalone browser PWAs (e.g., Discord, Slack, Web Apps).
+  - Detects browser tab-title unread badges (`(1) Facebook`, `(2) Messenger`, `"messaged you"`) on inactive workspaces via Hyprland `windowtitlev2` events.
+  - Remembers per-window browser tab history so notifications from background web tabs (like Google Messages or Messenger behind a `New Tab`) still blink the right workspace.
+  - Supports multiple workspaces and multiple windows blinking simultaneously.
 
 ## Element & Color Maps
 
