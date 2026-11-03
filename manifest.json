@@ -30,7 +30,7 @@
         "key": "style",
         "type": "enum",
         "label": "Symbol Style",
-        "description": "Choose between Nerd Font elemental icons (󰈸 󰖌 󰋵 󰖝 󰫢), Alchemical symbols (🜂 🜄 🜃 🜁 ✧), Japanese Godai (地 水 火 風 空), or Chinese Wu Xing (木 火 土 金 水). Right-click the widget on the bar to switch anytime.",
+        "description": "Choose between Nerd Font elemental icons (󰈸 󰖌 󰌪 󰖝 󰫢), Alchemical symbols (🜂 🜄 🜃 🜁 ✧), Japanese Godai (地 水 火 風 空), or Chinese Wu Xing (木 火 土 金 水). Right-click the widget on the bar to switch anytime.",
         "defaultValue": "elements",
         "options": [
           {

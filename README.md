@@ -18,7 +18,7 @@ Right-click any element on the bar and pick a tradition. The choice changes more
 
 | | Symbols | Design language |
 |---|---|---|
-| **Elemental** | 󰈸 󰖌 󰋵 󰖝 󰫢 Fire, Water, Earth, Air, Aether | Modern and friendly: moderately rounded cards with vivid edges, a modern sans-serif, snappy motion with a little bounce |
+| **Elemental** | 󰈸 󰖌 󰌪 󰖝 󰫢 Fire, Water, Earth, Air, Aether | Modern and friendly: moderately rounded cards with vivid edges, a modern sans-serif, snappy motion with a little bounce |
 | **Alchemical** | 🜂 🜄 🜃 🜁 ✧ Fire, Water, Earth, Air, Aether | Hermetic precision: razor-thin bright lines on crushed black, square corners, serif type, strictly linear motion |
 | **Japanese Godai** 五大 | 地 水 火 風 空 Earth, Water, Fire, Wind, Void | Zen minimalism: square corners, ink black and grays, Mincho brush-stroke kanji; color appears only where something is active, and nothing animates |
 | **Chinese Wu Xing** 五行 | 木 火 土 金 水 Wood, Fire, Earth, Metal, Water | Taoist flow: generous rounding, warm earth colors, long smooth curves that settle with a gentle give |
@@ -88,7 +88,7 @@ Workspaces 6–10 repeat the same five elements.
 |:---:|---|:---:|:---:|---|
 | 1 | Fire | 󰈸 | `U+F0238` | `#FF6B35` |
 | 2 | Water | 󰖌 | `U+F058C` | `#38BDF8` |
-| 3 | Earth | 󰋵 | `U+F02F5` | `#4ADE80` |
+| 3 | Earth | 󰌪 | `U+F032A` | `#4ADE80` |
 | 4 | Air | 󰖝 | `U+F059D` | `#67E8F9` |
 | 5 | Aether | 󰫢 | `U+F0AE2` | `#C084FC` |
 
