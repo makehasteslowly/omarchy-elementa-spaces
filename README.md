@@ -4,7 +4,7 @@
 
 *Elementa*, Latin for "the elements". Each workspace on your bar becomes an element (fire, water, earth, air, aether, or their counterparts in three other traditions), drawn in its own color. Hover one to see its windows live; when an app on another workspace wants your attention, its element breathes until you look.
 
-![Elementa Spaces in its four traditions](preview.png)
+![The preview card in each tradition: Light above, Bold below](preview.png)
 
 ```bash
 omarchy plugin add https://github.com/makehasteslowly/omarchy-elementa-spaces.git --enable
@@ -12,12 +12,22 @@ omarchy plugin add https://github.com/makehasteslowly/omarchy-elementa-spaces.gi
 
 ---
 
-## Four traditions, four design languages
+## Four traditions, each in a Light and a Bold
 
-Right-click any element on the bar and pick a tradition. The choice changes more than the symbols: the preview card, the menu, the type and the motion follow it.
+Right-click any element on the bar and pick a tradition, then **Soft** (Light), **Bold** or **Theme**. The choice changes more than the symbols: the preview card, the menu, the type and the motion follow it.
 
-| | Symbols | Design language |
-|---|---|---|
+| | Symbols | Light (Soft) | Bold |
+|---|---|---|---|
+| **Elemental** · Art Deco | 󰈸 󰖌 󰌪 󰖝 󰫢 Fire, Water, Earth, Air, Aether | *Miami Deco*: cream, pastel mint and peach, a brushed-nickel frame with stepped corners | *Onyx Opulence*: jet black, a polished-brass ziggurat frame, jewel tones |
+| **Alchemical** | 🜂 🜄 🜃 🜁 ✧ Fire, Water, Earth, Air, Aether | *Parchment*: sepia vellum, iron-gall ink, faded marginalia colors, a manuscript double rule | *Luminescence*: void black, the five colors as glowing neon lines |
+| **Japanese Godai** 五大 | 地 水 火 風 空 Earth, Water, Fire, Wind, Void | *Ink wash*: rice paper, faded watercolor, soft translucent grays | *Stark*: black and white only, fresh cinnabar accents, thick blocks |
+| **Chinese Wu Xing** 五行 | 木 火 土 金 水 Wood, Fire, Earth, Metal, Water | *Faded silk*: pale jade and bamboo, a thin, round frame | *Imperial lacquer*: cinnabar lacquer, a polished-gold frame |
+
+Each tradition also has its own type and motion: Elemental a modern sans with a little bounce, Alchemical serif type and strictly linear motion, Godai Mincho brush-stroke kanji and no transitions at all (color appears only where something is active), Wu Xing long smooth curves that settle gently. **Theme** keeps a tradition's shapes and takes the colors from your Omarchy theme. Colors are checked against your bar and darkened or lightened when they would not stand out.
+
+![The menu in each tradition, Light and Bold](docs/menus.png)
+
+---|---|---|
 | **Elemental** | 󰈸 󰖌 󰌪 󰖝 󰫢 Fire, Water, Earth, Air, Aether | Modern and friendly: moderately rounded cards with vivid edges, a modern sans-serif, snappy motion with a little bounce |
 | **Alchemical** | 🜂 🜄 🜃 🜁 ✧ Fire, Water, Earth, Air, Aether | Hermetic precision: razor-thin bright lines on crushed black, square corners, serif type, strictly linear motion |
 | **Japanese Godai** 五大 | 地 水 火 風 空 Earth, Water, Fire, Wind, Void | Zen minimalism: square corners, ink black and grays, Mincho brush-stroke kanji; color appears only where something is active, and nothing animates |
@@ -36,6 +46,8 @@ Each tradition has **Soft** and **Bold** colors, or **Theme** to take them from 
 | Nothing | An empty workspace |
 
 When you switch, the dot grows into the bar, in the tradition's own motion.
+
+![The bar in each tradition, Light and Bold](docs/bar.png)
 
 - **Click** an element to go to that workspace. Click the one you are on to change its layout (tiled, scrolling, floating).
 - **Scroll** over the elements to step through your workspaces.

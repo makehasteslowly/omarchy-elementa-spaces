@@ -54,21 +54,21 @@
       {
         "key": "colorMode",
         "type": "enum",
-        "label": "Icon Colors",
-        "description": "Choose between Soft elemental colors, Bold high-saturation elemental colors, or the active Omarchy theme's own colors.",
+        "label": "Colors",
+        "description": "Each tradition's Light variant (Soft), its Bold variant, or the active Omarchy theme's colors.",
         "defaultValue": "elemental",
         "options": [
           {
             "value": "elemental",
-            "label": "Soft Elemental (Pastel 5-element palette)"
+            "label": "Soft: the Light variant (paper, silk, vellum, cream)"
           },
           {
             "value": "bold",
-            "label": "Bold Elemental (High-saturation vivid 5-element palette)"
+            "label": "Bold: the Bold variant (onyx, lacquer, void black)"
           },
           {
             "value": "theme",
-            "label": "Theme Colors (Follow active Omarchy theme)"
+            "label": "Theme: your Omarchy theme"
           }
         ]
       },
