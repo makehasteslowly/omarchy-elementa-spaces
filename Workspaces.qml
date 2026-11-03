@@ -5,14 +5,98 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 BarWidget {
   id: root
-  moduleName: "omarchy.workspaces"
+  // Our own ID: the shell uses it to find this widget's settings and its copies
+  // on other monitors. (It was "omarchy.workspaces", the built-in widget's.)
+  moduleName: "makehasteslowly.elementa"
+
+  // The five alchemical symbols, drawn: fire and air point up, water and earth
+  // down, earth and air are crossed, aether is a four-point star
+  component AlchemyGlyph: Canvas {
+    property string kind: "fire"
+    property color strokeColor: Color.foreground
+    property real strokeWeight: 1.4
+    width: 16
+    height: 16
+    antialiasing: true
+    onKindChanged: requestPaint()
+    onStrokeColorChanged: requestPaint()
+    onStrokeWeightChanged: requestPaint()
+    onWidthChanged: requestPaint()
+    onHeightChanged: requestPaint()
+    onPaint: {
+      var ctx = getContext("2d")
+      ctx.reset()
+      var lw = strokeWeight
+      var span = root.uniformIconSize - lw
+      var midX = width / 2, midY = height / 2
+      var left = midX - span / 2, right = midX + span / 2
+      var top = midY - span / 2, bottom = midY + span / 2
+      ctx.strokeStyle = String(strokeColor)
+      ctx.lineWidth = lw
+      ctx.lineJoin = "round"
+      ctx.lineCap = "round"
+      function bar(y) { ctx.beginPath(); ctx.moveTo(left + span * 0.1, y); ctx.lineTo(right - span * 0.1, y); ctx.stroke() }
+      if (kind === "fire" || kind === "air") {
+        ctx.beginPath(); ctx.moveTo(midX, top); ctx.lineTo(right, bottom); ctx.lineTo(left, bottom); ctx.closePath(); ctx.stroke()
+        if (kind === "air") bar(top + span * 0.48)
+      } else if (kind === "water" || kind === "earth") {
+        ctx.beginPath(); ctx.moveTo(left, top); ctx.lineTo(right, top); ctx.lineTo(midX, bottom); ctx.closePath(); ctx.stroke()
+        if (kind === "earth") bar(top + span * 0.52)
+      } else {
+        var inner = span * 0.22
+        ctx.beginPath()
+        ctx.moveTo(midX, top); ctx.lineTo(midX + inner, midY - inner); ctx.lineTo(right, midY); ctx.lineTo(midX + inner, midY + inner)
+        ctx.lineTo(midX, bottom); ctx.lineTo(midX - inner, midY + inner); ctx.lineTo(left, midY); ctx.lineTo(midX - inner, midY - inner)
+        ctx.closePath(); ctx.stroke()
+      }
+    }
+  }
+
+  // ---- One design language per tradition (cards, menu, marks, motion):
+  //   Elemental  modern and friendly: moderate rounding, vivid edges, a modern
+  //              sans, snappy motion with a little bounce
+  //   Alchemical hermetic precision: razor-thin bright lines on crushed black,
+  //              serif type, strictly linear motion
+  //   Godai      zen minimalism: square corners, ink black and grays, color only
+  //              where something is active, no transitions
+  //   Wu Xing    Taoist flow: heavy rounding, warm earth colors, long smooth
+  //              curves that settle with a gentle give
+  readonly property var looks: ({
+    elements: { radius: 10, inner: 7,  border: 1.5, borderAlpha: 0.6,  font: "Noto Sans",         bg: "",        ink: false,
+                easing: Easing.OutBack, overshoot: 1.7, duration: 220 },
+    alchemy:  { radius: 1,  inner: 0,  border: 1,   borderAlpha: 0.95, font: "Noto Serif",        bg: "#050505", ink: false,
+                easing: Easing.Linear,  overshoot: 0,   duration: 130 },
+    godai:    { radius: 0,  inner: 0,  border: 1,   borderAlpha: 0.22, font: "Noto Serif CJK JP", bg: "#000000", ink: true,
+                easing: Easing.Linear,  overshoot: 0,   duration: 0 },
+    wuxing:   { radius: 16, inner: 11, border: 1.5, borderAlpha: 0.45, font: "Noto Sans",         bg: "",        ink: false,
+                easing: Easing.OutBack, overshoot: 1.15, duration: 420 }
+  })
+  readonly property var look: root.looks[root.iconStyle] || root.looks.elements
+  // Kanji in each tradition's hand: Mincho (brush) for Godai, gothic for Wu Xing
+  function styleSurface(content) {
+    var surface = content && content.parent ? content.parent.parent : null
+    if (!surface || surface.radius === undefined) return
+    surface.radius = Qt.binding(function() { return root.look.radius })
+    surface.color = Qt.binding(function() { return root.look.bg !== "" ? Qt.color(root.look.bg) : Color.popups.background })
+  }
+  function glyphFont(styleName) {
+    if (styleName === "godai") return "Noto Serif CJK JP"
+    if (styleName === "wuxing") return "Noto Sans CJK JP"
+    return root.bar ? root.bar.fontFamily : Style.font.family
+  }
+
+  Commons.Translations {
+    id: strings
+    directory: Qt.resolvedUrl("i18n")
+  }
 
   readonly property int slots: 10
-  readonly property string pluginId: "elemental-workspace-indicator"
+  readonly property string pluginId: "makehasteslowly.elementa"
 
   // Supported styles: "elements" | "alchemy" | "godai" | "wuxing"
   property string localStyleOverride: ""
@@ -118,10 +202,12 @@ BarWidget {
   property bool blinkPhase: false
   property real blinkAlpha: root.blinkPhase ? 1.0 : 0.22
 
+  // The breath follows the tradition: a sine swell, a linear ramp (Alchemical),
+  // or a plain on/off cut with no fade at all (Godai)
   Behavior on blinkAlpha {
     NumberAnimation {
-      duration: Style.duration(Math.round(root.blinkIntervalMs * 0.92))
-      easing.type: Easing.InOutSine
+      duration: root.look.duration === 0 ? 0 : Style.duration(Math.round(root.blinkIntervalMs * 0.92))
+      easing.type: root.look.easing === Easing.Linear ? Easing.Linear : Easing.InOutSine
     }
   }
 
@@ -801,9 +887,9 @@ BarWidget {
     elements: [
       { icon: "󰈸", glyphScale: 1.29, alchemyKind: "fire",   name: "Fire",   color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
       { icon: "󰖌", glyphScale: 1.38, alchemyKind: "water",  name: "Water",  color: "#38BDF8", boldColor: "#0088FF", lightColor: "#0284C7", boldLightColor: "#0055D4" },
-      { icon: "󰌪", glyphScale: 1.24, alchemyKind: "earth",  name: "Earth",  color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
+      { icon: "󰋵", glyphScale: 1.30, alchemyKind: "earth",  name: "Earth",  color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
       { icon: "󰖝", glyphScale: 1.19, alchemyKind: "air",    name: "Air",    color: "#67E8F9", boldColor: "#00F0FF", lightColor: "#0E7490", boldLightColor: "#007A8C" },
-      { icon: "󱐋", glyphScale: 1.10, alchemyKind: "aether", name: "Aether", color: "#C084FC", boldColor: "#B829FF", lightColor: "#7E22CE", boldLightColor: "#6B00D7" }
+      { icon: "󰫢", glyphScale: 1.06, alchemyKind: "aether", name: "Aether", color: "#C084FC", boldColor: "#B829FF", lightColor: "#7E22CE", boldLightColor: "#6B00D7" }
     ],
     alchemy: [
       { icon: "🜂", glyphScale: 1.0,  alchemyKind: "fire",   name: "Fire (🜂)",   color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
@@ -813,11 +899,11 @@ BarWidget {
       { icon: "✧",  glyphScale: 1.0,  alchemyKind: "aether", name: "Aether (✧)", color: "#C084FC", boldColor: "#B829FF", lightColor: "#7E22CE", boldLightColor: "#6B00D7" }
     ],
     godai: [
-      { icon: "地", glyphScale: 1.09, alchemyKind: "earth",  name: "Chi · Earth (地)", color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
-      { icon: "水", glyphScale: 1.07, alchemyKind: "water",  name: "Sui · Water (水)", color: "#38BDF8", boldColor: "#0088FF", lightColor: "#0284C7", boldLightColor: "#0055D4" },
-      { icon: "火", glyphScale: 1.09, alchemyKind: "fire",   name: "Ka · Fire (火)",   color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
-      { icon: "風", glyphScale: 1.11, alchemyKind: "air",    name: "Fū · Wind (風)",   color: "#67E8F9", boldColor: "#00F0FF", lightColor: "#0E7490", boldLightColor: "#007A8C" },
-      { icon: "空", glyphScale: 1.10, alchemyKind: "aether", name: "Kū · Void (空)",   color: "#C084FC", boldColor: "#B829FF", lightColor: "#7E22CE", boldLightColor: "#6B00D7" }
+      { icon: "地", glyphScale: 1.09, alchemyKind: "earth",  ink: true, name: "Chi · Earth (地)", color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
+      { icon: "水", glyphScale: 1.07, alchemyKind: "water",  ink: true, name: "Sui · Water (水)", color: "#38BDF8", boldColor: "#0088FF", lightColor: "#0284C7", boldLightColor: "#0055D4" },
+      { icon: "火", glyphScale: 1.09, alchemyKind: "fire",   ink: true, name: "Ka · Fire (火)",   color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
+      { icon: "風", glyphScale: 1.11, alchemyKind: "air",    ink: true, name: "Fū · Wind (風)",   color: "#67E8F9", boldColor: "#00F0FF", lightColor: "#0E7490", boldLightColor: "#007A8C" },
+      { icon: "空", glyphScale: 1.10, alchemyKind: "aether", ink: true, name: "Kū · Void (空)",   color: "#C084FC", boldColor: "#B829FF", lightColor: "#7E22CE", boldLightColor: "#6B00D7" }
     ],
     wuxing: [
       { icon: "木", glyphScale: 1.07, alchemyKind: "earth",  name: "Mù · Wood (木)",   color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
@@ -830,6 +916,10 @@ BarWidget {
 
   function resolveElementColor(item, forPopup, isHighlighted) {
     if (!item) return Color.foreground
+    if (item.ink && !isHighlighted) {
+      var onLightInk = forPopup ? root.isLightPopup : root.isLightBar
+      return onLightInk ? Qt.rgba(0.2, 0.2, 0.2, 1) : Qt.rgba(0.86, 0.86, 0.86, 1)
+    }
     var onLight = forPopup ? root.isLightPopup : root.isLightBar
     var bg = forPopup ? root.effectivePopupBg : root.effectiveBarBg
 
@@ -869,6 +959,7 @@ BarWidget {
       icon: raw.icon,
       glyphScale: raw.glyphScale,
       alchemyKind: raw.alchemyKind,
+      ink: Boolean(raw.ink),
       name: raw.name,
       color: root.resolveElementColor(raw, Boolean(forPopup), isHighlighted !== false),
       rawColor: raw.color,
@@ -922,6 +1013,14 @@ BarWidget {
       command = "hyprctl dispatch " + Util.shellQuote("hl.dsp.focus({ monitor = \"" + root.monitorName + "\" })") + " >/dev/null && " + command
     }
     root.bar.run(command)
+    layoutRefresh.restart()
+  }
+
+  // The toggle script runs detached; read the new layout once it has applied
+  Timer {
+    id: layoutRefresh
+    interval: 700
+    onTriggered: root.refresh()
   }
 
   Component.onCompleted: {
@@ -1050,8 +1149,13 @@ BarWidget {
     }
   }
 
+  // Our own IPC target. The reserved "omarchy.workspaces" belongs to the built-in
+  // widget: the shell routes a target to the first handler only, so sharing it
+  // broke one of the two whenever both were on a bar. Omarchy's layout scripts
+  // still call that one; we re-read the layout after our own layout click and
+  // whenever a preview opens instead.
   ShellIpc {
-    target: "omarchy.workspaces"
+    target: "makehasteslowly.elementa"
 
     function refresh(): void { root.broadcast("refresh") }
   }
@@ -1104,8 +1208,8 @@ BarWidget {
             : (root.useBoldColors ? 0.58 : (root.isLightBar ? 0.50 : 0.42)))
         // Only show plain bar tooltip when floating preview is disabled
         tooltipText: root.showPreview ? "" : (shown
-          ? (slot + " · " + element.name + " (" + root.activeMode + ") · Right-click: style")
-          : (slot + " · " + element.name + " · Right-click: style"))
+          ? strings.t("tip.active").arg(slot).arg(element.name).arg(root.activeMode)
+          : strings.t("tip.other").arg(slot).arg(element.name))
         horizontalMargin: 6
         verticalPadding: 6
         fixedWidth: root.vertical ? root.barSize : Style.space(22)
@@ -1138,7 +1242,7 @@ BarWidget {
           text: wsBtn.element.icon
           color: wsBtn.element.color
           opacity: wsBtn.notified ? root.blinkAlpha : 1.0
-          font.family: wsBtn.isCjk ? "Noto Sans CJK JP" : (root.bar ? root.bar.fontFamily : Style.font.family)
+          font.family: root.glyphFont(root.iconStyle)
           font.weight: wsBtn.isCjk ? Font.DemiBold : Font.Normal
           font.pixelSize: Math.round(root.uniformIconSize * wsBtn.element.glyphScale)
           renderType: Text.CurveRendering
@@ -1147,97 +1251,26 @@ BarWidget {
           scale: wsBtn.pressScale * wsBtn.blinkScale
         }
 
-        // Uniform-size vector Alchemical symbol renderer (exact 12px outer bounds matching the other packs).
-        Canvas {
-          id: alchemyCanvas
+        // Alchemical symbols are drawn (exact 12px outer bounds, like the other packs)
+        AlchemyGlyph {
           visible: wsBtn.useAlchemy
-          width: 16
-          height: 16
           anchors.centerIn: parent
           anchors.verticalCenterOffset: -1
           opacity: wsBtn.notified ? root.blinkAlpha : 1.0
           scale: wsBtn.pressScale * wsBtn.blinkScale
-          antialiasing: true
-
-          property string kind: wsBtn.element.alchemyKind
-          property color strokeColor: wsBtn.element.color
-          property real strokeWeight: root.useBoldColors ? 1.65 : 1.4
-
-          onKindChanged: requestPaint()
-          onStrokeColorChanged: requestPaint()
-          onStrokeWeightChanged: requestPaint()
-          onWidthChanged: requestPaint()
-          onHeightChanged: requestPaint()
-
-          onPaint: {
-            var ctx = getContext("2d")
-            ctx.reset()
-            var w = width
-            var h = height
-            var targetSize = root.uniformIconSize
-            var lw = strokeWeight
-            var span = targetSize - lw
-            var midX = w / 2
-            var midY = h / 2
-            var left = midX - span / 2
-            var right = midX + span / 2
-            var top = midY - span / 2
-            var bottom = midY + span / 2
-
-            ctx.strokeStyle = String(strokeColor)
-            ctx.lineWidth = lw
-            ctx.lineJoin = "round"
-            ctx.lineCap = "round"
-
-            if (kind === "fire" || kind === "air") {
-              ctx.beginPath()
-              ctx.moveTo(midX, top)
-              ctx.lineTo(right, bottom)
-              ctx.lineTo(left, bottom)
-              ctx.closePath()
-              ctx.stroke()
-              if (kind === "air") {
-                var barY = top + span * 0.48
-                ctx.beginPath()
-                ctx.moveTo(left + span * 0.1, barY)
-                ctx.lineTo(right - span * 0.1, barY)
-                ctx.stroke()
-              }
-            } else if (kind === "water" || kind === "earth") {
-              ctx.beginPath()
-              ctx.moveTo(left, top)
-              ctx.lineTo(right, top)
-              ctx.lineTo(midX, bottom)
-              ctx.closePath()
-              ctx.stroke()
-              if (kind === "earth") {
-                var eBarY = top + span * 0.52
-                ctx.beginPath()
-                ctx.moveTo(left + span * 0.1, eBarY)
-                ctx.lineTo(right - span * 0.1, eBarY)
-                ctx.stroke()
-              }
-            } else {
-              var inner = span * 0.22
-              ctx.beginPath()
-              ctx.moveTo(midX, top)
-              ctx.lineTo(midX + inner, midY - inner)
-              ctx.lineTo(right, midY)
-              ctx.lineTo(midX + inner, midY + inner)
-              ctx.lineTo(midX, bottom)
-              ctx.lineTo(midX - inner, midY + inner)
-              ctx.lineTo(left, midY)
-              ctx.lineTo(midX - inner, midY - inner)
-              ctx.closePath()
-              ctx.stroke()
-            }
-          }
+          kind: wsBtn.element.alchemyKind
+          strokeColor: wsBtn.element.color
+          strokeWeight: root.useBoldColors ? 1.65 : 1.4
         }
 
+        // State mark under the symbol: a bar for the workspace you are on, a dot
+        // for one with windows, nothing for an empty one. The mark grows from
+        // dot to bar, so moving between workspaces reads as one motion.
         Rectangle {
-          width: root.vertical ? 2 : 10
-          height: root.vertical ? 10 : 2
-          radius: 1
+          readonly property real len: wsBtn.shown ? 10 : 3
+          width: root.vertical ? (wsBtn.shown ? 2 : 3) : len
+          height: root.vertical ? len : (wsBtn.shown ? 2 : 3)
+          radius: Math.min(width, height) / 2
           color: wsBtn.element.color
           anchors.bottom: root.vertical ? undefined : parent.bottom
           anchors.bottomMargin: root.vertical ? 0 : 2
@@ -1245,14 +1278,16 @@ BarWidget {
           anchors.leftMargin: root.vertical ? 2 : 0
           anchors.horizontalCenter: root.vertical ? undefined : parent.horizontalCenter
           anchors.verticalCenter: root.vertical ? parent.verticalCenter : undefined
-          opacity: wsBtn.shown ? 1 : 0
-          scale: wsBtn.shown ? 1 : 0.95
+          opacity: wsBtn.shown ? 1 : (wsBtn.occupied ? 0.75 : 0)
 
           Behavior on opacity {
-            NumberAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic }
+            NumberAnimation { duration: Style.duration(root.look.duration); easing.type: root.look.easing === Easing.Linear ? Easing.Linear : Easing.OutCubic }
           }
-          Behavior on scale {
-            NumberAnimation { duration: Style.duration(180); easing.type: Easing.Bezier; easing.bezierCurve: Style.easeOut }
+          Behavior on width {
+            NumberAnimation { duration: Style.duration(root.look.duration); easing.type: root.look.easing; easing.overshoot: root.look.overshoot }
+          }
+          Behavior on height {
+            NumberAnimation { duration: Style.duration(root.look.duration); easing.type: root.look.easing; easing.overshoot: root.look.overshoot }
           }
         }
       }
@@ -1285,7 +1320,11 @@ BarWidget {
     readonly property string modeLabel: isFocusedWs ? root.activeMode : (root.modeCache[wsId] || "")
     readonly property string wsNotifLabel: root.workspaceNotificationLabel(wsId)
 
-    borderColor: Qt.alpha(Qt.color(previewPopup.element.color), 0.55)
+    // A quiet frame in the element's tone; the mark on the top edge below says
+    // which workspace this is, even when the card is held against the screen edge
+    borderSpec: Border.flat(root.look.ink ? Qt.alpha(Color.foreground, root.look.borderAlpha)
+                                         : Qt.alpha(Qt.color(previewPopup.element.color), root.look.borderAlpha), root.look.border)
+    onOpenChanged: if (open) root.refresh()   // the layout label is never stale
 
     readonly property real cardThumbW: root.previewSize === "small"
       ? Style.space(140)
@@ -1316,10 +1355,27 @@ BarWidget {
       }
     }
 
+    // Under the hovered symbol: a short element-colored line on the card's top edge
+    Rectangle {
+      readonly property Item target: root.hoveredAnchorItem
+      readonly property real targetX: target && previewPopup.visible
+        ? target.mapToGlobal(target.width / 2, 0).x - previewColumn.mapToGlobal(0, 0).x : -100
+      visible: target !== null && !root.vertical && targetX > 0 && targetX < previewColumn.width
+      z: 10
+      width: Style.space(18)
+      height: 2
+      radius: 1
+      x: targetX - width / 2
+      y: -previewPopup.padding
+      color: previewPopup.element.color
+    }
+
     ColumnLayout {
       id: previewColumn
       anchors.fill: parent
       spacing: Style.space(8)
+      // The card surface (holder's parent) takes the tradition's corners and ground
+      Component.onCompleted: root.styleSurface(previewColumn)
 
       // Header row: Element icon + Workspace number & Element name + Window count / mode
       RowLayout {
@@ -1337,84 +1393,18 @@ BarWidget {
             textFormat: Text.PlainText
             text: previewPopup.element.icon
             color: previewPopup.element.color
-            font.family: (root.iconStyle === "godai" || root.iconStyle === "wuxing")
-              ? "Noto Sans CJK JP"
-              : (root.bar ? root.bar.fontFamily : Style.font.family)
+            font.family: root.glyphFont(root.iconStyle)
             font.weight: (root.iconStyle === "godai" || root.iconStyle === "wuxing")
               ? Font.DemiBold : Font.Normal
             font.pixelSize: Math.round(root.uniformIconSize * previewPopup.element.glyphScale)
             renderType: Text.CurveRendering
           }
 
-          Canvas {
+          AlchemyGlyph {
             visible: root.iconStyle === "alchemy"
-            width: 16
-            height: 16
             anchors.centerIn: parent
-            antialiasing: true
-            property string kind: previewPopup.element.alchemyKind
-            property color strokeColor: previewPopup.element.color
-            onKindChanged: requestPaint()
-            onStrokeColorChanged: requestPaint()
-            onPaint: {
-              var ctx = getContext("2d")
-              ctx.reset()
-              var targetSize = root.uniformIconSize
-              var lw = 1.4
-              var span = targetSize - lw
-              var midX = width / 2
-              var midY = height / 2
-              var left = midX - span / 2
-              var right = midX + span / 2
-              var top = midY - span / 2
-              var bottom = midY + span / 2
-              ctx.strokeStyle = String(strokeColor)
-              ctx.lineWidth = lw
-              ctx.lineJoin = "round"
-              ctx.lineCap = "round"
-              if (kind === "fire" || kind === "air") {
-                ctx.beginPath()
-                ctx.moveTo(midX, top)
-                ctx.lineTo(right, bottom)
-                ctx.lineTo(left, bottom)
-                ctx.closePath()
-                ctx.stroke()
-                if (kind === "air") {
-                  var barY = top + span * 0.48
-                  ctx.beginPath()
-                  ctx.moveTo(left + span * 0.1, barY)
-                  ctx.lineTo(right - span * 0.1, barY)
-                  ctx.stroke()
-                }
-              } else if (kind === "water" || kind === "earth") {
-                ctx.beginPath()
-                ctx.moveTo(left, top)
-                ctx.lineTo(right, top)
-                ctx.lineTo(midX, bottom)
-                ctx.closePath()
-                ctx.stroke()
-                if (kind === "earth") {
-                  var eBarY = top + span * 0.52
-                  ctx.beginPath()
-                  ctx.moveTo(left + span * 0.1, eBarY)
-                  ctx.lineTo(right - span * 0.1, eBarY)
-                  ctx.stroke()
-                }
-              } else {
-                var inner = span * 0.22
-                ctx.beginPath()
-                ctx.moveTo(midX, top)
-                ctx.lineTo(midX + inner, midY - inner)
-                ctx.lineTo(right, midY)
-                ctx.lineTo(midX + inner, midY + inner)
-                ctx.lineTo(midX, bottom)
-                ctx.lineTo(midX - inner, midY + inner)
-                ctx.lineTo(left, midY)
-                ctx.lineTo(midX - inner, midY - inner)
-                ctx.closePath()
-                ctx.stroke()
-              }
-            }
+            kind: previewPopup.element.alchemyKind
+            strokeColor: previewPopup.element.color
           }
         }
 
@@ -1424,7 +1414,7 @@ BarWidget {
           textFormat: Text.PlainText
           text: previewPopup.slot + " · " + previewPopup.element.name
           color: previewPopup.element.color
-          font.family: Style.font.family
+          font.family: root.look.font
           font.pixelSize: Style.font.body
           font.bold: true
           elide: Text.ElideRight
@@ -1434,11 +1424,12 @@ BarWidget {
           Layout.alignment: Qt.AlignVCenter
           textFormat: Text.PlainText
           text: previewPopup.totalWindowCount === 0
-            ? (previewPopup.modeLabel ? previewPopup.modeLabel : "Empty")
-            : (previewPopup.totalWindowCount + (previewPopup.totalWindowCount === 1 ? " window" : " windows"))
+            ? previewPopup.modeLabel
+            : (previewPopup.totalWindowCount === 1 ? strings.t("preview.oneWindow")
+              : strings.t("preview.windows").arg(previewPopup.totalWindowCount))
           color: Color.foreground
           opacity: 0.6
-          font.family: Style.font.family
+          font.family: root.look.font
           font.pixelSize: Style.font.small || 11
         }
       }
@@ -1448,13 +1439,13 @@ BarWidget {
         visible: previewPopup.windowList.length === 0
         Layout.fillWidth: true
         Layout.preferredHeight: previewPopup.emptyH
-        radius: Math.max(4, Style.cornerRadius - 2)
+        radius: root.look.inner
         color: Qt.alpha(Color.foreground, emptyMouse.containsMouse ? 0.09 : 0.04)
         border.width: 1
         border.color: emptyMouse.containsMouse ? previewPopup.element.color : Qt.alpha(Color.foreground, 0.14)
 
-        Behavior on color { ColorAnimation { duration: Style.duration(140) } }
-        Behavior on border.color { ColorAnimation { duration: Style.duration(140) } }
+        Behavior on color { ColorAnimation { duration: Style.duration(Math.min(140, root.look.duration)) } }
+        Behavior on border.color { ColorAnimation { duration: Style.duration(Math.min(140, root.look.duration)) } }
 
         ColumnLayout {
           anchors.centerIn: parent
@@ -1463,20 +1454,20 @@ BarWidget {
           Text {
             Layout.alignment: Qt.AlignHCenter
             textFormat: Text.PlainText
-            text: previewPopup.isFocusedWs ? "Active Workspace (Empty)" : "Empty Workspace"
+            text: strings.t("preview.noWindows")
             color: Color.foreground
             opacity: 0.75
-            font.family: Style.font.family
+            font.family: root.look.font
             font.pixelSize: Style.font.body
           }
 
           Text {
             Layout.alignment: Qt.AlignHCenter
             textFormat: Text.PlainText
-            text: previewPopup.isFocusedWs ? "Click bar icon to cycle layout" : "Click to switch workspace"
+            text: previewPopup.isFocusedWs ? strings.t("preview.hintLayout") : strings.t("preview.hintGo")
             color: Color.foreground
             opacity: 0.45
-            font.family: Style.font.family
+            font.family: root.look.font
             font.pixelSize: Style.font.small || 11
           }
         }
@@ -1510,7 +1501,7 @@ BarWidget {
             readonly property var waylandToplevel: modelData ? modelData.wayland : null
             readonly property string winTitle: (modelData && modelData.title)
               ? String(modelData.title)
-              : (waylandToplevel && waylandToplevel.title ? String(waylandToplevel.title) : "Window")
+              : (waylandToplevel && waylandToplevel.title ? String(waylandToplevel.title) : strings.t("preview.window"))
             readonly property string winClass: (modelData && modelData.lastIpcObject && modelData.lastIpcObject.class)
               ? String(modelData.lastIpcObject.class)
               : (waylandToplevel && waylandToplevel.appId ? String(waylandToplevel.appId) : "")
@@ -1521,7 +1512,7 @@ BarWidget {
 
             Layout.preferredWidth: previewPopup.cardThumbW
             Layout.preferredHeight: previewPopup.cardThumbH
-            radius: Math.max(4, Style.cornerRadius - 2)
+            radius: root.look.inner
             color: root.isLightPopup ? Qt.alpha(Color.foreground, 0.06) : Qt.rgba(0, 0, 0, 0.28)
             border.width: 0
             clip: true
@@ -1564,7 +1555,7 @@ BarWidget {
                 text: winCard.winClass || winCard.winTitle
                 color: Color.foreground
                 opacity: 0.45
-                font.family: Style.font.family
+                font.family: root.look.font
                 font.pixelSize: Style.font.body
                 width: parent.width - 12
                 horizontalAlignment: Text.AlignHCenter
@@ -1599,7 +1590,7 @@ BarWidget {
                   text: "󰂚"
                   color: previewPopup.element.color
                   opacity: root.blinkAlpha
-                  font.family: Style.font.family
+                  font.family: root.look.font
                   font.pixelSize: Style.font.small || 11
                 }
 
@@ -1618,7 +1609,7 @@ BarWidget {
                   textFormat: Text.PlainText
                   text: winCard.winTitle
                   color: winCard.winNotified ? previewPopup.element.color : Color.foreground
-                  font.family: Style.font.family
+                  font.family: root.look.font
                   font.pixelSize: Style.font.small || 11
                   font.bold: winCard.winNotified
                   elide: Text.ElideRight
@@ -1659,10 +1650,10 @@ BarWidget {
         visible: previewPopup.totalWindowCount > 4
         Layout.alignment: Qt.AlignRight
         textFormat: Text.PlainText
-        text: "+" + (previewPopup.totalWindowCount - 4) + " more"
+        text: strings.t("preview.more").arg(previewPopup.totalWindowCount - 4)
         color: Color.foreground
         opacity: 0.55
-        font.family: Style.font.family
+        font.family: root.look.font
         font.pixelSize: Style.font.small || 11
       }
     }
@@ -1675,26 +1666,28 @@ BarWidget {
     anchorItem: root
     bar: root.bar
     open: root.pickerOpen
-    contentWidth: Style.space(292)
+    contentWidth: Style.space(360)
+    borderSpec: Border.flat(Qt.alpha(Color.foreground, root.look.ink ? 0.22 : 0.3), root.look.border)
     contentHeight: styleColumn.implicitHeight + padding * 2
 
     readonly property var styleChoices: [
-      { key: "elements", label: "Elemental Icons" },
-      { key: "alchemy",  label: "Alchemical Symbols" },
-      { key: "godai",    label: "Japanese Godai" },
-      { key: "wuxing",   label: "Chinese Wu Xing" }
+      { key: "elements", label: strings.t("style.elements") },
+      { key: "alchemy",  label: strings.t("style.alchemy") },
+      { key: "godai",    label: strings.t("style.godai") },
+      { key: "wuxing",   label: strings.t("style.wuxing") }
     ]
 
     ColumnLayout {
       id: styleColumn
       anchors.fill: parent
       spacing: Style.space(6)
+      Component.onCompleted: root.styleSurface(styleColumn)
 
       Text {
         textFormat: Text.PlainText
-        text: "Workspace Symbol Style"
+        text: strings.t("menu.title")
         color: Color.foreground
-        font.family: Style.font.family
+        font.family: root.look.font
         font.pixelSize: Style.font.body
         font.bold: true
         Layout.bottomMargin: Style.space(2)
@@ -1741,9 +1734,7 @@ BarWidget {
                     textFormat: Text.PlainText
                     text: modelData.icon
                     color: root.resolveElementColor(modelData, true, false)
-                    font.family: (choiceBtn.choiceKey === "godai" || choiceBtn.choiceKey === "wuxing")
-                      ? "Noto Sans CJK JP"
-                      : (root.bar ? root.bar.fontFamily : Style.font.family)
+                    font.family: root.glyphFont(choiceBtn.choiceKey)
                     font.weight: (choiceBtn.choiceKey === "godai" || choiceBtn.choiceKey === "wuxing")
                       ? Font.DemiBold : Font.Normal
                     font.pixelSize: Math.round(root.uniformIconSize * modelData.glyphScale)
@@ -1752,77 +1743,11 @@ BarWidget {
                     verticalAlignment: Text.AlignVCenter
                   }
 
-                  Canvas {
+                  AlchemyGlyph {
                     visible: choiceBtn.choiceKey === "alchemy"
-                    width: 16
-                    height: 16
                     anchors.centerIn: parent
-                    antialiasing: true
-                    property string kind: modelData.alchemyKind
-                    property color strokeColor: root.resolveElementColor(modelData, true, false)
-                    onStrokeColorChanged: requestPaint()
-
-                    onPaint: {
-                      var ctx = getContext("2d")
-                      ctx.reset()
-                      var targetSize = root.uniformIconSize
-                      var lw = 1.4
-                      var span = targetSize - lw
-                      var midX = width / 2
-                      var midY = height / 2
-                      var left = midX - span / 2
-                      var right = midX + span / 2
-                      var top = midY - span / 2
-                      var bottom = midY + span / 2
-
-                      ctx.strokeStyle = String(strokeColor)
-                      ctx.lineWidth = lw
-                      ctx.lineJoin = "round"
-                      ctx.lineCap = "round"
-
-                      if (kind === "fire" || kind === "air") {
-                        ctx.beginPath()
-                        ctx.moveTo(midX, top)
-                        ctx.lineTo(right, bottom)
-                        ctx.lineTo(left, bottom)
-                        ctx.closePath()
-                        ctx.stroke()
-                        if (kind === "air") {
-                          var barY = top + span * 0.48
-                          ctx.beginPath()
-                          ctx.moveTo(left + span * 0.1, barY)
-                          ctx.lineTo(right - span * 0.1, barY)
-                          ctx.stroke()
-                        }
-                      } else if (kind === "water" || kind === "earth") {
-                        ctx.beginPath()
-                        ctx.moveTo(left, top)
-                        ctx.lineTo(right, top)
-                        ctx.lineTo(midX, bottom)
-                        ctx.closePath()
-                        ctx.stroke()
-                        if (kind === "earth") {
-                          var eBarY = top + span * 0.52
-                          ctx.beginPath()
-                          ctx.moveTo(left + span * 0.1, eBarY)
-                          ctx.lineTo(right - span * 0.1, eBarY)
-                          ctx.stroke()
-                        }
-                      } else {
-                        var inner = span * 0.22
-                        ctx.beginPath()
-                        ctx.moveTo(midX, top)
-                        ctx.lineTo(midX + inner, midY - inner)
-                        ctx.lineTo(right, midY)
-                        ctx.lineTo(midX + inner, midY + inner)
-                        ctx.lineTo(midX, bottom)
-                        ctx.lineTo(midX - inner, midY + inner)
-                        ctx.lineTo(left, midY)
-                        ctx.lineTo(midX - inner, midY - inner)
-                        ctx.closePath()
-                        ctx.stroke()
-                      }
-                    }
+                    kind: modelData.alchemyKind
+                    strokeColor: root.resolveElementColor(modelData, true, false)
                   }
                 }
               }
@@ -1835,7 +1760,7 @@ BarWidget {
               textFormat: Text.PlainText
               text: choiceBtn.modelData.label
               color: Color.foreground
-              font.family: Style.font.family
+              font.family: root.look.font
               font.pixelSize: Style.font.body
               horizontalAlignment: Text.AlignLeft
               verticalAlignment: Text.AlignVCenter
@@ -1863,24 +1788,24 @@ BarWidget {
           Layout.preferredWidth: Style.space(102)
           Layout.alignment: Qt.AlignVCenter
           textFormat: Text.PlainText
-          text: "Icon Colors"
+          text: strings.t("menu.colors")
           color: Color.foreground
-          font.family: Style.font.family
+          font.family: root.look.font
           font.pixelSize: Style.font.body
           elide: Text.ElideRight
         }
 
         Repeater {
           model: [
-            { key: "elemental", label: "Soft" },
-            { key: "bold",      label: "Bold" },
-            { key: "theme",     label: "Theme" }
+            { key: "elemental", label: strings.t("opt.soft") },
+            { key: "bold",      label: strings.t("opt.bold") },
+            { key: "theme",     label: strings.t("opt.theme") }
           ]
 
           Button {
             required property var modelData
             Layout.fillWidth: true
-            Layout.preferredWidth: modelData.key === "theme" ? Style.space(62) : Style.space(54)
+            Layout.preferredWidth: 1   // equal segments
             Layout.preferredHeight: Style.space(28)
             bordered: true
             selected: root.colorMode === modelData.key
@@ -1898,25 +1823,25 @@ BarWidget {
           Layout.preferredWidth: Style.space(102)
           Layout.alignment: Qt.AlignVCenter
           textFormat: Text.PlainText
-          text: "Preview Size"
+          text: strings.t("menu.preview")
           color: Color.foreground
-          font.family: Style.font.family
+          font.family: root.look.font
           font.pixelSize: Style.font.body
           elide: Text.ElideRight
         }
 
         Repeater {
           model: [
-            { key: "off",    label: "Off" },
-            { key: "small",  label: "S" },
-            { key: "medium", label: "M" },
-            { key: "large",  label: "L" }
+            { key: "off",    label: strings.t("opt.off") },
+            { key: "small",  label: strings.t("opt.small") },
+            { key: "medium", label: strings.t("opt.medium") },
+            { key: "large",  label: strings.t("opt.large") }
           ]
 
           Button {
             required property var modelData
             Layout.fillWidth: true
-            Layout.preferredWidth: modelData.key === "off" ? Style.space(44) : Style.space(38)
+            Layout.preferredWidth: 1   // equal segments
             Layout.preferredHeight: Style.space(28)
             bordered: true
             selected: root.previewSize === modelData.key
@@ -1935,27 +1860,25 @@ BarWidget {
           Layout.preferredWidth: Style.space(102)
           Layout.alignment: Qt.AlignVCenter
           textFormat: Text.PlainText
-          text: "Notif Blink"
+          text: strings.t("menu.blink")
           color: Color.foreground
-          font.family: Style.font.family
+          font.family: root.look.font
           font.pixelSize: Style.font.body
           elide: Text.ElideRight
         }
 
         Repeater {
           model: [
-            { key: "off",    label: "Off" },
-            { key: "slow",   label: "Slow" },
-            { key: "medium", label: "Med" },
-            { key: "fast",   label: "Fast" }
+            { key: "off",    label: strings.t("opt.off") },
+            { key: "slow",   label: strings.t("opt.slow") },
+            { key: "medium", label: strings.t("opt.steady") },
+            { key: "fast",   label: strings.t("opt.fast") }
           ]
 
           Button {
             required property var modelData
             Layout.fillWidth: true
-            Layout.preferredWidth: modelData.key === "slow" || modelData.key === "fast"
-              ? Style.space(44)
-              : Style.space(38)
+            Layout.preferredWidth: 1   // equal segments
             Layout.preferredHeight: Style.space(28)
             bordered: true
             selected: root.notificationSpeed === modelData.key

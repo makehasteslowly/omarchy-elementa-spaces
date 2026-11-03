@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "id": "elemental-workspace-indicator",
-  "name": "Elemental Workspace Indicator",
-  "version": "1.7.1",
+  "id": "makehasteslowly.elementa",
+  "name": "Elementa Spaces",
+  "version": "2.0.0",
   "author": "makehasteslowly",
   "license": "MIT",
-  "homepage": "https://github.com/makehasteslowly/omarchy-five-elements-workspaces",
-  "description": "Hyprland workspace indicators for Omarchy with 4 selectable 5-element traditions (Elemental Icons, Alchemical Symbols, Japanese Godai, Chinese Wu Xing), Soft/Bold/Theme icon color modes, resizable live floating workspace window previews, and notification workspace blinking.",
+  "homepage": "https://github.com/makehasteslowly/omarchy-elementa-spaces",
+  "description": "Your workspaces as the five elements, in four traditions with their own design language: Elemental (fire, water, earth, air, aether), Alchemical symbols, Japanese Godai and Chinese Wu Xing. The bar marks the workspace you are on, the ones with windows and the empty ones; hover for a live preview of its windows, and a workspace blinks when one of its apps wants your attention. No dependencies, no network.",
   "kinds": [
     "bar-widget"
   ],
@@ -14,8 +14,8 @@
     "barWidget": "Workspaces.qml"
   },
   "barWidget": {
-    "displayName": "Elemental Workspace Indicator",
-    "description": "Workspace indicators for the 5 elements with 4 symbol styles (Elemental, Alchemy, Japanese Godai, Chinese Wu Xing), Soft/Bold/Theme icon color modes, resizable live floating workspace previews, and notification workspace blinking.",
+    "displayName": "Elementa Spaces",
+    "description": "Workspaces as the five elements, with live previews on hover and alert blinking.",
     "category": "Compositor",
     "allowMultiple": false,
     "defaultSection": "left",
@@ -30,7 +30,7 @@
         "key": "style",
         "type": "enum",
         "label": "Symbol Style",
-        "description": "Choose between Nerd Font elemental icons (󰈸 󰖌 󰌪 󰖝 󱐋), Alchemical symbols (🜂 🜄 🜃 🜁 ✧), Japanese Godai (地 水 火 風 空), or Chinese Wu Xing (木 火 土 金 水). Right-click the widget on the bar to switch anytime.",
+        "description": "Choose between Nerd Font elemental icons (󰈸 󰖌 󰋵 󰖝 󰫢), Alchemical symbols (🜂 🜄 🜃 🜁 ✧), Japanese Godai (地 水 火 風 空), or Chinese Wu Xing (木 火 土 金 水). Right-click the widget on the bar to switch anytime.",
         "defaultValue": "elements",
         "options": [
           {
@@ -100,7 +100,7 @@
       {
         "key": "notificationSpeed",
         "type": "enum",
-        "label": "Notification Blink Speed",
+        "label": "Alert Blink",
         "description": "Control the fade/blink speed when an app on an inactive workspace receives a notification (Off, Slow, Medium, or Fast).",
         "defaultValue": "fast",
         "options": [

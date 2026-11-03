@@ -1,152 +1,158 @@
-# Elemental Workspace Indicator (`elemental-workspace-indicator`)
+# Elementa Spaces
 
-A Hyprland workspace indicator bar widget for [Omarchy](https://omarchy.org/) that represents your workspaces with the symbols and elemental colors of the **Five Elements** across **4 selectable traditions** — complete with **3 icon color modes (`Soft` / `Bold` / `Theme`)**, **notification workspace & window blinking (`Notif Blink`: `Slow` / `Med` / `Fast` / `Off`)**, and a **resizable live floating workspace preview window** (`Small`, `Medium`, `Large`, or `Off`) on hover:
+**Your workspaces as the five elements, for the Omarchy bar.**
 
-1. **Elemental Icons (`elements`)** — `󰈸 󰖌 󰌪 󰖝 󱐋` (Fire, Water, Earth, Air, Aether)
-2. **Alchemical Symbols (`alchemy`)** — `🜂 🜄 🜃 🜁 ✧` (Classical Alchemical Geometry)
-3. **Japanese Godai (`godai`)** — `地 水 火 風 空` (Earth, Water, Fire, Wind, Void)
-4. **Chinese Wu Xing (`wuxing`)** — `木 火 土 金 水` (Wood, Fire, Earth, Metal, Water)
+*Elementa*, Latin for "the elements". Each workspace on your bar becomes an element (fire, water, earth, air, aether, or their counterparts in three other traditions), drawn in its own color. Hover one to see its windows live; when an app on another workspace wants your attention, its element breathes until you look.
 
-### Symbol Styles, Live Floating Preview & Right-Click Settings
+![Elementa Spaces in its four traditions](preview.png)
 
-| 4 Symbol Packs (`12px` Uniform Height) | Live Floating Workspace Preview (on Hover) | Right-Click Settings Popup |
-| :---: | :---: | :---: |
-| ![Symbol Packs](preview.png) | ![Floating Workspace Preview](preview-window.png) | ![Right-Click Settings Popup](preview-menu.png) |
+```bash
+omarchy plugin add https://github.com/makehasteslowly/omarchy-elementa-spaces.git --enable
+```
 
-## Interactive Controls
+---
 
-| Action | Behavior |
-| :--- | :--- |
-| **Hover** any workspace icon | Opens the **Floating Workspace Preview** (`Small` / `Medium` / `Large`) showing live Wayland window thumbnails (`ScreencopyView`) and pulsing notification highlights for that workspace |
-| **Click** a window card in preview | Switches directly to that workspace and focuses that exact window |
-| **Left-Click** an inactive workspace | Switches to that workspace (and clears any active notification blink) |
-| **Left-Click** the active workspace | Cycles the workspace's Hyprland layout (`dwindle` → `scrolling` → `floating`) |
-| **Right-Click** any workspace icon | Opens the **Style, Icon Colors (`Soft` / `Bold` / `Theme`), Preview Size (`Off` / `S` / `M` / `L`), and Notif Blink (`Off` / `Slow` / `Med` / `Fast`)** popup |
-| **Scroll Wheel** over widget | Scrolls through workspaces on the current monitor |
+## Four traditions, four design languages
 
-## Notification Blink (`Notif Blink`) & Preview Highlight
+Right-click any element on the bar and pick a tradition. The choice changes more than the symbols: the preview card, the menu, the type and the motion follow it.
 
-Never miss a message on an inactive workspace:
+| | Symbols | Design language |
+|---|---|---|
+| **Elemental** | 󰈸 󰖌 󰋵 󰖝 󰫢 Fire, Water, Earth, Air, Aether | Modern and friendly: moderately rounded cards with vivid edges, a modern sans-serif, snappy motion with a little bounce |
+| **Alchemical** | 🜂 🜄 🜃 🜁 ✧ Fire, Water, Earth, Air, Aether | Hermetic precision: razor-thin bright lines on crushed black, square corners, serif type, strictly linear motion |
+| **Japanese Godai** 五大 | 地 水 火 風 空 Earth, Water, Fire, Wind, Void | Zen minimalism: square corners, ink black and grays, Mincho brush-stroke kanji; color appears only where something is active, and nothing animates |
+| **Chinese Wu Xing** 五行 | 木 火 土 金 水 Wood, Fire, Earth, Metal, Water | Taoist flow: generous rounding, warm earth colors, long smooth curves that settle with a gentle give |
 
-- **Bar Indicator Breathing Pulse:** When an app, standalone PWA, or browser tab on an inactive workspace receives a notification, that workspace's elemental icon on the bar smoothly pulses in brightness until you switch to that workspace.
-- **Preview Window Card Highlight:** Hovering over a blinking workspace highlights the exact window that triggered the notification — pulsing its **360° elemental border** and **bottom title strip (`󰂚`)** in sync with the bar icon.
-- **Adjustable Blink Speed (`Notif Blink`):** Right-click the widget to choose between **`Slow`** (gentle breathing fade), **`Med`** (balanced pulse), **`Fast`** (brisk pulse), or **`Off`**.
-- **Multi-Workspace, PWA & Browser Tab-Aware:**
-  - Tracks system notifications, Wayland urgent window signals, and standalone browser PWAs (e.g., Discord, Slack, Web Apps).
-  - Detects browser tab-title unread badges (`(1) Facebook`, `(2) Messenger`, `"messaged you"`) on inactive workspaces via Hyprland `windowtitlev2` events.
-  - Remembers per-window browser tab history so notifications from background web tabs (like Google Messages or Messenger behind a `New Tab`) still blink the right workspace.
-  - Supports multiple workspaces and multiple windows blinking simultaneously.
+Each tradition has **Soft** and **Bold** colors, or **Theme** to take them from your Omarchy theme. Colors are checked against your bar and darkened or lightened when they would not stand out, so light themes work too.
 
-## Element & Color Maps
+---
 
-### 1. Elemental Icons (`elements`)
+## On the bar
 
-| Workspace | Element | Symbol | Codepoint | Hex Color |
-| :---: | :--- | :---: | :---: | :--- |
-| **1** *(6)* | **Fire** | `󰈸` | `U+F0238` | `#FF6B35` (Fiery Orange-Red) |
-| **2** *(7)* | **Water** | `󰖌` | `U+F058C` | `#38BDF8` (Water Blue) |
-| **3** *(8)* | **Earth** | `󰌪` | `U+F032A` | `#4ADE80` (Leaf Green) |
-| **4** *(9)* | **Air** | `󰖝` | `U+F059D` | `#67E8F9` (Wind Cyan) |
-| **5** *(10)* | **Aether** | `󱐋` | `U+F140B` | `#C084FC` (Aether Purple) |
+| Mark | Meaning |
+|---|---|
+| A short bar under the element | The workspace you are on |
+| A dot | A workspace with windows |
+| Nothing | An empty workspace |
 
-### 2. Alchemical Symbols (`alchemy`)
+When you switch, the dot grows into the bar, in the tradition's own motion.
 
-| Workspace | Element | Symbol | Geometry | Hex Color |
-| :---: | :--- | :---: | :--- | :--- |
-| **1** *(6)* | **Fire** | `🜂` | `△` (Upward triangle) | `#FF6B35` (Fiery Orange-Red) |
-| **2** *(7)* | **Water** | `🜄` | `▽` (Downward triangle) | `#38BDF8` (Water Blue) |
-| **3** *(8)* | **Earth** | `🜃` | `▽` + crossbar | `#4ADE80` (Leaf Green) |
-| **4** *(9)* | **Air** | `🜁` | `△` + crossbar | `#67E8F9` (Wind Cyan) |
-| **5** *(10)* | **Aether** | `✧` | Quintessence star | `#C084FC` (Aether Purple) |
+- **Click** an element to go to that workspace. Click the one you are on to change its layout (tiled, scrolling, floating).
+- **Scroll** over the elements to step through your workspaces.
+- **Right-click** for the menu: tradition, colors, preview size and alert blink.
+- **Hover** for the preview.
 
-### 3. Japanese Godai (`godai`, 五代)
+## The preview
 
-| Workspace | Element | Kanji | Reading | Hex Color |
-| :---: | :--- | :---: | :--- | :--- |
-| **1** *(6)* | **Earth** | `地` | *Chi* | `#4ADE80` (Earth Green) |
-| **2** *(7)* | **Water** | `水` | *Sui* | `#38BDF8` (Water Blue) |
-| **3** *(8)* | **Fire** | `火` | *Ka* | `#FF6B35` (Fire Red-Orange) |
-| **4** *(9)* | **Wind** | `風` | *Fū* | `#67E8F9` (Wind Cyan) |
-| **5** *(10)* | **Void** | `空` | *Kū* | `#C084FC` (Void Purple) |
+Hover an element and a card opens with live thumbnails of that workspace's windows and their titles. A short line on the card's top edge points to the element it belongs to. Click a window to go straight to it; click an empty workspace's card to go there. Choose **S**, **M** or **L**, or turn the preview **Off** (the element then shows a plain tooltip).
 
-### 4. Chinese Wu Xing (`wuxing`, 五行)
+## Alert blink
 
-| Workspace | Element | Hanzi | Pinyin | Hex Color |
-| :---: | :--- | :---: | :--- | :--- |
-| **1** *(6)* | **Wood** | `木` | *Mù* | `#4ADE80` (Wood Green) |
-| **2** *(7)* | **Fire** | `火` | *Huǒ* | `#FF6B35` (Fire Red-Orange) |
-| **3** *(8)* | **Earth** | `土` | *Tǔ* | `#FBBF24` (Earth Gold) |
-| **4** *(9)* | **Metal** | `金` | *Jīn* | `#E2E8F0` (Metallic Silver) |
-| **5** *(10)* | **Water** | `水` | *Shuǐ* | `#38BDF8` (Water Blue) |
+When an app on another workspace asks for attention, that workspace's element breathes on the bar until you visit it, and in the preview the window that asked is outlined. Pick **Slow**, **Steady** or **Fast**, or **Off**.
 
-## Features
+It notices:
 
-- **4 Selectable Symbol Packs (Uniform `12px` Optical Height):** All 4 packs (`elements`, `alchemy`, `godai`, `wuxing`) are optically calibrated to an identical `12px` height and shared vertical centerline.
-- **3 Selectable Icon Color Modes (`Soft` · `Bold` · `Theme`) + Auto-Adaptive Contrast:** Choose between **Soft** pastel elemental colors, **Bold** high-saturation vivid elemental colors, or **Theme** (follows your active Omarchy theme's `bar.active` / `bar.text` colors). Both elemental palettes automatically adapt their luminance and contrast on light, dark, and colored theme bars.
-- **Notif Blink (`Off` / `Slow` / `Med` / `Fast`):** When an app, standalone PWA, or browser tab (including web apps that notify via tab title badges like `(1) Facebook` or `"messaged you"`) on an inactive workspace triggers a notification or Wayland urgency signal, that workspace's elemental icon on the bar and the notifying window card inside the hover preview smoothly pulse in brightness at your chosen speed (`Slow`, `Med`, `Fast`, or `Off`) until you visit that workspace.
-- **Resizable Live Floating Workspace Preview (on Hover):** Hovering over any workspace indicator opens a floating preview card accented in that element's color, showing live Wayland window thumbnails (`ScreencopyView`), a 360° active-window elemental border (or pulsing notification border + `󰂚` title highlight for notifying windows), and window titles. Click any window card in the preview to jump directly to that window, or choose your preferred preview size (`Off`, `Small`, `Medium`, `Large`) from the right-click menu.
-- **Style, Icon Colors, Preview Size & Notif Blink Selector:** Automatically opens a selector popup on first install when no style is stored in `shell.json`, and you can **right-click** any workspace indicator on the bar at any time to switch between the 4 styles, 3 icon color modes (`Soft` / `Bold` / `Theme`), preview sizes (`Off` / `S` / `M` / `L`), or **Notif Blink** (`Off` / `Slow` / `Med` / `Fast`).
-- **Focused (Active) Workspace:** Rendered at full brightness (`1.0` opacity) in its elemental color with an animated elemental underline bar.
-- **Occupied Workspace:** Rendered in its elemental color at `0.78` opacity when windows are open on that workspace.
-- **Empty Workspace:** Rendered in its muted elemental tint at `0.40` opacity.
-- **Full Omarchy Multi-Monitor & Layout Support:** Preserves per-monitor workspace blocks (1–10 per monitor), scroll-wheel workspace switching, and left-clicking the active workspace to cycle Hyprland layouts (`dwindle` / `scrolling` / `floating`).
+- desktop notifications (matched to the app's window),
+- windows that mark themselves urgent,
+- browser tabs and web apps whose title shows unread messages, such as `(3) Messenger` or "… messaged you", including tabs in the background.
+
+---
+
+## Settings
+
+Everything is in the right-click menu. The same keys can be set from a terminal:
+
+| Key | Values | Default |
+|---|---|---|
+| `style` | `elements` · `alchemy` · `godai` · `wuxing` | `elements` |
+| `colorMode` | `elemental` (Soft) · `bold` · `theme` | `elemental` |
+| `previewSize` | `off` · `small` · `medium` · `large` | `medium` |
+| `notificationSpeed` | `off` · `slow` · `medium` (Steady) · `fast` | `fast` |
+
+```bash
+omarchy bar set makehasteslowly.elementa style godai
+omarchy bar move makehasteslowly.elementa --section left   # next to the launcher
+```
+
+On first use, with no tradition chosen yet, the menu opens once so you can pick one. Nothing is saved until you choose.
+
+---
+
+## Element maps
+
+Workspaces 6–10 repeat the same five elements.
+
+**Elemental**
+
+| Workspace | Element | Symbol | Codepoint | Color |
+|:---:|---|:---:|:---:|---|
+| 1 | Fire | 󰈸 | `U+F0238` | `#FF6B35` |
+| 2 | Water | 󰖌 | `U+F058C` | `#38BDF8` |
+| 3 | Earth | 󰋵 | `U+F02F5` | `#4ADE80` |
+| 4 | Air | 󰖝 | `U+F059D` | `#67E8F9` |
+| 5 | Aether | 󰫢 | `U+F0AE2` | `#C084FC` |
+
+**Alchemical**: drawn, not taken from a font, so all five share one exact size.
+
+| Workspace | Element | Symbol | Geometry |
+|:---:|---|:---:|---|
+| 1 | Fire | 🜂 | Triangle pointing up |
+| 2 | Water | 🜄 | Triangle pointing down |
+| 3 | Earth | 🜃 | Downward triangle, crossed |
+| 4 | Air | 🜁 | Upward triangle, crossed |
+| 5 | Aether | ✧ | Four-point star |
+
+**Japanese Godai** 五大
+
+| Workspace | Element | Kanji | Reading |
+|:---:|---|:---:|---|
+| 1 | Earth | 地 | *Chi* |
+| 2 | Water | 水 | *Sui* |
+| 3 | Fire | 火 | *Ka* |
+| 4 | Wind | 風 | *Fū* |
+| 5 | Void | 空 | *Kū* |
+
+**Chinese Wu Xing** 五行
+
+| Workspace | Element | Hanzi | Pinyin |
+|:---:|---|:---:|---|
+| 1 | Wood | 木 | *Mù* |
+| 2 | Fire | 火 | *Huǒ* |
+| 3 | Earth | 土 | *Tǔ* |
+| 4 | Metal | 金 | *Jīn* |
+| 5 | Water | 水 | *Shuǐ* |
+
+---
+
+## Works alongside Omarchy
+
+Elementa Spaces uses its own plugin ID and its own shell command name (`makehasteslowly.elementa`), so it never collides with Omarchy's built-in workspaces widget, even if both are on a bar. It follows Omarchy's per-monitor workspace blocks and the workspace layout that Omarchy's layout toggle sets.
+
+```bash
+omarchy-shell makehasteslowly.elementa refresh   # re-read layouts and workspace blocks
+```
+
+## Privacy
+
+Everything happens on your machine. Elementa Spaces makes no network requests. To know which workspace to blink, it reads window titles from Hyprland and the app names in Omarchy's local notification list (`~/.local/state/omarchy/notifications/live.json`); neither leaves your computer or is written anywhere.
 
 ## Dependencies
 
-- **Omarchy Shell** (`omarchy-shell`) and **Hyprland** (included with Omarchy).
-- **Nerd Font** & **Noto Sans CJK** (included with Omarchy). No external packages or network access required.
+Omarchy (its shell and Hyprland), a Nerd Font and Noto Sans / Noto Serif with their CJK variants, all included with Omarchy. Nothing else to install.
 
-## Installation
+## Moving from Elemental Workspace Indicator
 
-Install and enable directly with the `omarchy` CLI:
-
-```bash
-omarchy plugin add https://github.com/makehasteslowly/omarchy-five-elements-workspaces.git --enable
-```
-
-On first load, a popup lets you pick your preferred symbol pack. You can also switch styles or toggle the floating preview anytime by **right-clicking** the workspace indicators on the bar or running:
+Before version 2.0 this plugin was called **Elemental Workspace Indicator** (ID `elemental-workspace-indicator`). If you installed that, replace it once:
 
 ```bash
-# Nerd Font elemental icons (󰈸 󰖌 󰌪 󰖝 󱐋)
-omarchy bar set elemental-workspace-indicator style elements
-
-# Alchemical symbols (🜂 🜄 🜃 🜁 ✧)
-omarchy bar set elemental-workspace-indicator style alchemy
-
-# Japanese Godai (地 水 火 風 空)
-omarchy bar set elemental-workspace-indicator style godai
-
-# Chinese Wu Xing (木 火 土 金 水)
-omarchy bar set elemental-workspace-indicator style wuxing
-
-# Set the icon color mode (elemental = Soft, bold = Bold, theme = Active Omarchy Theme)
-omarchy bar set elemental-workspace-indicator colorMode elemental
-omarchy bar set elemental-workspace-indicator colorMode bold
-omarchy bar set elemental-workspace-indicator colorMode theme
-
-# Set the floating hover preview window size (off, small, medium, large)
-omarchy bar set elemental-workspace-indicator previewSize small
-omarchy bar set elemental-workspace-indicator previewSize medium
-omarchy bar set elemental-workspace-indicator previewSize large
-omarchy bar set elemental-workspace-indicator previewSize off
-
-# Set the notification pulse speed (off, slow, medium, fast)
-omarchy bar set elemental-workspace-indicator notificationSpeed fast
-omarchy bar set elemental-workspace-indicator notificationSpeed medium
-omarchy bar set elemental-workspace-indicator notificationSpeed slow
-omarchy bar set elemental-workspace-indicator notificationSpeed off
-```
-
-To move the widget next to your launcher in the left bar section:
-
-```bash
-omarchy bar move elemental-workspace-indicator --section left
+omarchy plugin remove elemental-workspace-indicator
+omarchy plugin add https://github.com/makehasteslowly/omarchy-elementa-spaces.git --enable
 ```
 
 ## Uninstall
 
 ```bash
-omarchy plugin remove elemental-workspace-indicator
+omarchy plugin remove makehasteslowly.elementa
 ```
 
 ## License
