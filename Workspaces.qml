@@ -892,25 +892,25 @@ BarWidget {
       { icon: "󰫢", glyphScale: 1.06, alchemyKind: "aether", name: "Aether", color: "#C084FC", boldColor: "#B829FF", lightColor: "#7E22CE", boldLightColor: "#6B00D7" }
     ],
     alchemy: [
-      { icon: "🜂", glyphScale: 1.0,  alchemyKind: "fire",   name: "Fire (🜂)",   color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
-      { icon: "🜄", glyphScale: 1.0,  alchemyKind: "water",  name: "Water (🜄)",  color: "#38BDF8", boldColor: "#0088FF", lightColor: "#0284C7", boldLightColor: "#0055D4" },
-      { icon: "🜃", glyphScale: 1.0,  alchemyKind: "earth",  name: "Earth (🜃)",  color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
-      { icon: "🜁", glyphScale: 1.0,  alchemyKind: "air",    name: "Air (🜁)",    color: "#67E8F9", boldColor: "#00F0FF", lightColor: "#0E7490", boldLightColor: "#007A8C" },
-      { icon: "✧",  glyphScale: 1.0,  alchemyKind: "aether", name: "Aether (✧)", color: "#C084FC", boldColor: "#B829FF", lightColor: "#7E22CE", boldLightColor: "#6B00D7" }
+      { icon: "🜂", glyphScale: 1.0,  alchemyKind: "fire",   name: "Fire",   color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
+      { icon: "🜄", glyphScale: 1.0,  alchemyKind: "water",  name: "Water",  color: "#38BDF8", boldColor: "#0088FF", lightColor: "#0284C7", boldLightColor: "#0055D4" },
+      { icon: "🜃", glyphScale: 1.0,  alchemyKind: "earth",  name: "Earth",  color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
+      { icon: "🜁", glyphScale: 1.0,  alchemyKind: "air",    name: "Air",    color: "#67E8F9", boldColor: "#00F0FF", lightColor: "#0E7490", boldLightColor: "#007A8C" },
+      { icon: "✧",  glyphScale: 1.0,  alchemyKind: "aether", name: "Aether", color: "#C084FC", boldColor: "#B829FF", lightColor: "#7E22CE", boldLightColor: "#6B00D7" }
     ],
     godai: [
-      { icon: "地", glyphScale: 1.09, alchemyKind: "earth",  ink: true, name: "Chi · Earth (地)", color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
-      { icon: "水", glyphScale: 1.07, alchemyKind: "water",  ink: true, name: "Sui · Water (水)", color: "#38BDF8", boldColor: "#0088FF", lightColor: "#0284C7", boldLightColor: "#0055D4" },
-      { icon: "火", glyphScale: 1.09, alchemyKind: "fire",   ink: true, name: "Ka · Fire (火)",   color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
-      { icon: "風", glyphScale: 1.11, alchemyKind: "air",    ink: true, name: "Fū · Wind (風)",   color: "#67E8F9", boldColor: "#00F0FF", lightColor: "#0E7490", boldLightColor: "#007A8C" },
-      { icon: "空", glyphScale: 1.10, alchemyKind: "aether", ink: true, name: "Kū · Void (空)",   color: "#C084FC", boldColor: "#B829FF", lightColor: "#7E22CE", boldLightColor: "#6B00D7" }
+      { icon: "地", glyphScale: 1.09, alchemyKind: "earth",  ink: true, name: "Chi · Earth", color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
+      { icon: "水", glyphScale: 1.07, alchemyKind: "water",  ink: true, name: "Sui · Water", color: "#38BDF8", boldColor: "#0088FF", lightColor: "#0284C7", boldLightColor: "#0055D4" },
+      { icon: "火", glyphScale: 1.09, alchemyKind: "fire",   ink: true, name: "Ka · Fire",   color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
+      { icon: "風", glyphScale: 1.11, alchemyKind: "air",    ink: true, name: "Fū · Wind",   color: "#67E8F9", boldColor: "#00F0FF", lightColor: "#0E7490", boldLightColor: "#007A8C" },
+      { icon: "空", glyphScale: 1.10, alchemyKind: "aether", ink: true, name: "Kū · Void",   color: "#C084FC", boldColor: "#B829FF", lightColor: "#7E22CE", boldLightColor: "#6B00D7" }
     ],
     wuxing: [
-      { icon: "木", glyphScale: 1.07, alchemyKind: "earth",  name: "Mù · Wood (木)",   color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
-      { icon: "火", glyphScale: 1.09, alchemyKind: "fire",   name: "Huǒ · Fire (火)",  color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
-      { icon: "土", glyphScale: 1.11, alchemyKind: "earth",  name: "Tǔ · Earth (土)",  color: "#FBBF24", boldColor: "#FFB800", lightColor: "#B45309", boldLightColor: "#9A3412" },
-      { icon: "金", glyphScale: 1.09, alchemyKind: "air",    name: "Jīn · Metal (金)", color: "#E2E8F0", boldColor: "#FFFFFF", lightColor: "#334155", boldLightColor: "#0F172A" },
-      { icon: "水", glyphScale: 1.07, alchemyKind: "water",  name: "Shuǐ · Water (水)", color: "#38BDF8", boldColor: "#0088FF", lightColor: "#0284C7", boldLightColor: "#0055D4" }
+      { icon: "木", glyphScale: 1.07, alchemyKind: "earth",  name: "Mù · Wood",   color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
+      { icon: "火", glyphScale: 1.09, alchemyKind: "fire",   name: "Huǒ · Fire",  color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
+      { icon: "土", glyphScale: 1.11, alchemyKind: "earth",  name: "Tǔ · Earth",  color: "#FBBF24", boldColor: "#FFB800", lightColor: "#B45309", boldLightColor: "#9A3412" },
+      { icon: "金", glyphScale: 1.09, alchemyKind: "air",    name: "Jīn · Metal", color: "#E2E8F0", boldColor: "#FFFFFF", lightColor: "#334155", boldLightColor: "#0F172A" },
+      { icon: "水", glyphScale: 1.07, alchemyKind: "water",  name: "Shuǐ · Water", color: "#38BDF8", boldColor: "#0088FF", lightColor: "#0284C7", boldLightColor: "#0055D4" }
     ]
   })
 
