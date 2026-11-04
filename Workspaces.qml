@@ -665,6 +665,32 @@ BarWidget {
     return String(fallbackClass || "Notification")
   }
 
+  // Several windows could have sent a notification (terminals share one process,
+  // so a notification only says "kitty"). Pick one without guessing wrong:
+  // 1. one candidate: that one; 2. the notification's text matches exactly one
+  // window's title: that one; 3. one candidate is on the workspace you are on:
+  // assume it came from there and blink nothing; 4. otherwise the most recently
+  // used. (Each candidate carries its title, workspace and focus order.)
+  function resolveCandidates(pool, entry) {
+    if (!pool || pool.length === 0) return null
+    if (pool.length === 1) return pool[0]
+    var words = []
+    var text = (String(entry.summary || "") + " " + String(entry.body || "")).toLowerCase()
+    var raw = text.split(/[^a-z0-9]+/)
+    for (var w = 0; w < raw.length; w++) if (raw[w].length >= 4 && words.indexOf(raw[w]) < 0) words.push(raw[w])
+    var byText = pool.filter(function(c) {
+      var t = String(c.title || "").toLowerCase()
+      for (var i = 0; i < words.length; i++) if (t.indexOf(words[i]) >= 0) return true
+      return false
+    })
+    if (byText.length === 1) return byText[0]
+    var active = root.activeWorkspaceId()
+    var narrowed = byText.length > 1 ? byText : pool
+    for (var j = 0; j < narrowed.length; j++) if (narrowed[j].wsId === active) return null
+    narrowed.sort(function(a, b) { return a.focusOrder - b.focusOrder })
+    return narrowed[0]
+  }
+
   function matchNotificationTarget(entry) {
     if (!entry) return null
     var appRaw = String(entry.app || "").trim()
@@ -693,11 +719,13 @@ BarWidget {
           pidMatches.push({
             wsId: list[i].workspace.id,
             address: addr,
+            title: String(list[i].title || (ipc && ipc.title) || ""),
+            focusOrder: Number(ipc && ipc.focusHistoryID !== undefined ? ipc.focusHistoryID : 9999),
             label: root.formatNotificationLabel(appRaw, sourceRaw, wmClass)
           })
         }
       }
-      if (pidMatches.length === 1) return pidMatches[0]
+      if (pidMatches.length > 0) return root.resolveCandidates(pidMatches, entry)
     }
 
     // 2. Domain/source match against PWA class or browser tab title (e.g., "messages.google.com" -> "messages")
@@ -749,19 +777,14 @@ BarWidget {
             titleCandidates.push({
               wsId: list[i].workspace.id,
               address: addr,
+              title: title,
               inactive: list[i].workspace.id !== activeId ? 0 : 1,
               focusOrder: Number(ipc && ipc.focusHistoryID !== undefined ? ipc.focusHistoryID : 9999),
               label: root.formatNotificationLabel(appRaw, sourceRaw, wmClass)
             })
           }
         }
-        if (titleCandidates.length > 0) {
-          titleCandidates.sort(function(a, b) {
-            if (a.inactive !== b.inactive) return a.inactive - b.inactive
-            return a.focusOrder - b.focusOrder
-          })
-          return titleCandidates[0]
-        }
+        if (titleCandidates.length > 0) return root.resolveCandidates(titleCandidates, entry)
       }
 
       // 2c. Check remembered tab titles seen earlier in each browser window (handles background tabs behind "New Tab")
@@ -781,6 +804,7 @@ BarWidget {
               historyCandidates.push({
                 wsId: list[i].workspace.id,
                 address: addr,
+                title: String(list[i].title || (ipc && ipc.title) || ""),
                 inactive: list[i].workspace.id !== activeId ? 0 : 1,
                 recency: sIdx,
                 focusOrder: Number(ipc && ipc.focusHistoryID !== undefined ? ipc.focusHistoryID : 9999),
@@ -791,18 +815,14 @@ BarWidget {
           }
         }
         if (historyCandidates.length > 0) {
-          historyCandidates.sort(function(a, b) {
-            if (a.inactive !== b.inactive) return a.inactive - b.inactive
-            if (a.recency !== b.recency) return a.recency - b.recency
-            return a.focusOrder - b.focusOrder
-          })
-          return historyCandidates[0]
+          historyCandidates.sort(function(a, b) { return a.recency - b.recency })
+          return root.resolveCandidates(historyCandidates, entry)
         }
       }
     }
 
-    // 3. Fallback: Match the actual application window (excluding unrelated PWAs with "__" in wmClass),
-    // preferring windows on inactive workspaces so an open browser window on the active workspace doesn't shadow an inactive one.
+    // 3. Fallback: the application's windows (excluding unrelated PWAs with "__" in
+    // wmClass), resolved without guessing (see resolveCandidates)
     var appHyphen = app.replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
     var appToken = app.split(/[\s-_]+/)[0].replace(/[^a-z0-9]/g, "")
     if (appToken.length >= 3) {
@@ -818,6 +838,7 @@ BarWidget {
         var cand = {
           wsId: list[i].workspace.id,
           address: addr,
+          title: String(list[i].title || (ipc && ipc.title) || ""),
           inactive: list[i].workspace.id !== activeId ? 0 : 1,
           focusOrder: focusOrder,
           label: root.formatNotificationLabel(appRaw, sourceRaw, wmClass)
@@ -829,13 +850,7 @@ BarWidget {
         }
       }
       var pool = exactCandidates.length > 0 ? exactCandidates : prefixCandidates
-      if (pool.length > 0) {
-        pool.sort(function(a, b) {
-          if (a.inactive !== b.inactive) return a.inactive - b.inactive
-          return a.focusOrder - b.focusOrder
-        })
-        return pool[0]
-      }
+      if (pool.length > 0) return root.resolveCandidates(pool, entry)
     }
 
     return null

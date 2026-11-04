@@ -56,13 +56,17 @@ Hover an element and a card opens with live thumbnails of that workspace's windo
 
 ## Alert blink
 
-When an app on another workspace asks for attention, that workspace's element breathes on the bar until you visit it, and in the preview the window that asked is outlined. Pick **Slow**, **Steady** or **Fast**, or **Off**.
+When an app on another workspace asks for attention, that workspace's element breathes on the bar until you visit it, and in the preview the windows that asked move to the front and pulse in the element's color, all in the same rhythm. Pick **Slow**, **Steady** or **Fast**, or **Off**.
+
+![Two windows on one workspace want attention: both cards pulse together, in time with the element on the bar](docs/alerts.gif)
 
 It notices:
 
 - desktop notifications (matched to the app's window),
 - windows that mark themselves urgent,
 - browser tabs and web apps whose title shows unread messages, such as `(3) Messenger` or "… messaged you", including tabs in the background.
+
+When several windows could have sent a notification (terminals, for instance, share one process), Elementa does not guess: a window whose title matches the notification wins; otherwise, if one of them is on the workspace you are on, it assumes the notification came from there and blinks nothing elsewhere.
 
 ---
 
