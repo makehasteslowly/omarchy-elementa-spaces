@@ -18,22 +18,16 @@ Right-click any element on the bar and pick a tradition, then **Soft** (Light), 
 
 | | Symbols | Light (Soft) | Bold |
 |---|---|---|---|
-| **Elemental** · Art Deco | 󰈸 󰖌 󰌪 󰖝 󰫢 Fire, Water, Earth, Air, Aether | *Miami Deco*: cream, pastel mint and peach, a brushed-nickel frame with stepped corners | *Onyx Opulence*: jet black, a polished-brass ziggurat frame, jewel tones |
-| **Alchemical** | 🜂 🜄 🜃 🜁 ✧ Fire, Water, Earth, Air, Aether | *Parchment*: sepia vellum, iron-gall ink, faded marginalia colors, a manuscript double rule | *Luminescence*: void black, the five colors as glowing neon lines |
-| **Japanese Godai** 五大 | 地 水 火 風 空 Earth, Water, Fire, Wind, Void | *Ink wash*: rice paper, faded watercolor, soft translucent grays | *Stark*: black and white only, fresh cinnabar accents, thick blocks |
-| **Chinese Wu Xing** 五行 | 木 火 土 金 水 Wood, Fire, Earth, Metal, Water | *Faded silk*: pale jade and bamboo, a thin, round frame | *Imperial lacquer*: cinnabar lacquer, a polished-gold frame |
+| **Elemental** · Art Deco esoterica | 󰈸 󰖌 󰌪 󰖝 󰫢 Fire, Water, Earth, Air, Aether | *Folio*: an aged page from Manly P. Hall's *The Secret Teachings of All Ages* (1928), gold leaf, muted jewel colors, a faint gold sunburst | *Lapis*: midnight lapis lazuli with gold leaf and vivid jewel colors |
+| **Alchemical** | 🜂 🜄 🜃 🜁 ✧ Fire, Water, Earth, Air, Aether | *Parchment*: sepia vellum, iron-gall ink, faded marginalia colors | *Luminescence*: void black, the five colors as light |
+| **Japanese Godai** 五大 | 地 水 火 風 空 Earth, Water, Fire, Wind, Void | *Ink wash*: rice paper, faded watercolor, soft grays | *Yakisugi* (焼杉): charred cedar with a silver grain, ash-white type, one vermilion accent |
+| **Chinese Wu Xing** 五行 | 木 火 土 金 水 Wood, Fire, Earth, Metal, Water | *Xuan paper*: the scholar's rice paper, ink-black type, sober ink colors, a red seal | *Black lacquer*: ash-ivory type on black lacquer, the same red seal |
 
-Each tradition also has its own type and motion: Elemental a modern sans with a little bounce, Alchemical serif type and strictly linear motion, Godai Mincho brush-stroke kanji and no transitions at all (color appears only where something is active), Wu Xing long smooth curves that settle gently. **Theme** keeps a tradition's shapes and takes the colors from your Omarchy theme. Colors are checked against your bar and darkened or lightened when they would not stand out.
+Every card is framed the same quiet way: a hairline edge on continuous corners, the curve easing out of the straight edge as on Apple's devices. Each tradition's character comes from its ground, palette, type and corner size.
+
+Each tradition also has its own type and motion: Elemental a modern sans with a little bounce, Alchemical serif type and strictly linear motion, Godai Mincho brush-stroke kanji and no transitions at all (color appears only where something is active), Wu Xing a scholar's discipline: Song-style serif kanji, nearly square corners and calm, deliberate motion. **Theme** keeps a tradition's shapes and takes the colors from your Omarchy theme. Colors are checked against your bar and darkened or lightened when they would not stand out.
 
 ![The menu in each tradition, Light and Bold](docs/menus.png)
-
----|---|---|
-| **Elemental** | 󰈸 󰖌 󰌪 󰖝 󰫢 Fire, Water, Earth, Air, Aether | Modern and friendly: moderately rounded cards with vivid edges, a modern sans-serif, snappy motion with a little bounce |
-| **Alchemical** | 🜂 🜄 🜃 🜁 ✧ Fire, Water, Earth, Air, Aether | Hermetic precision: razor-thin bright lines on crushed black, square corners, serif type, strictly linear motion |
-| **Japanese Godai** 五大 | 地 水 火 風 空 Earth, Water, Fire, Wind, Void | Zen minimalism: square corners, ink black and grays, Mincho brush-stroke kanji; color appears only where something is active, and nothing animates |
-| **Chinese Wu Xing** 五行 | 木 火 土 金 水 Wood, Fire, Earth, Metal, Water | Taoist flow: generous rounding, warm earth colors, long smooth curves that settle with a gentle give |
-
-Each tradition has **Soft** and **Bold** colors, or **Theme** to take them from your Omarchy theme. Colors are checked against your bar and darkened or lightened when they would not stand out, so light themes work too.
 
 ---
 
@@ -56,7 +50,7 @@ When you switch, the dot grows into the bar, in the tradition's own motion.
 
 ## The preview
 
-Hover an element and a card opens with live thumbnails of that workspace's windows and their titles. A short line on the card's top edge points to the element it belongs to. Click a window to go straight to it; click an empty workspace's card to go there. Choose **S**, **M** or **L**, or turn the preview **Off** (the element then shows a plain tooltip).
+Hover an element and a card opens with live thumbnails of that workspace's windows and their titles. A short line on the card's top edge points to the element it belongs to. Each window shows its app's icon and title. Click a window to go straight to it, or middle-click it to close it (politely, like Super+W); click an empty workspace's card to go there. Choose **S**, **M**, **L** or **XL** (a share of your screen's width: 17, 22, 28 or 34%, so they suit any resolution), or turn the preview **Off** (the element then shows a plain tooltip). **Windows** sets how many it shows: **Auto** fits as many as your screen allows at that size (up to 9: smaller previews show more windows), or pick 2, 4, 6 or 9; the rest are counted as "+N more".
 
 ## Alert blink
 
@@ -78,7 +72,8 @@ Everything is in the right-click menu. The same keys can be set from a terminal:
 |---|---|---|
 | `style` | `elements` · `alchemy` · `godai` · `wuxing` | `elements` |
 | `colorMode` | `elemental` (Soft) · `bold` · `theme` | `elemental` |
-| `previewSize` | `off` · `small` · `medium` · `large` | `medium` |
+| `previewSize` | `off` · `small` · `medium` · `large` · `xlarge` | `medium` |
+| `previewCount` | `auto` (as many as fit, up to 9) · `2` · `4` · `6` · `9` | `auto` |
 | `notificationSpeed` | `off` · `slow` · `medium` (Steady) · `fast` | `fast` |
 
 ```bash

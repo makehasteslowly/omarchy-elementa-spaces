@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "id": "makehasteslowly.elementa",
   "name": "Elementa Spaces",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "author": "makehasteslowly",
   "license": "MIT",
   "homepage": "https://github.com/makehasteslowly/omarchy-elementa-spaces",
-  "description": "Your workspaces as the five elements, in four traditions with their own design language: Elemental (fire, water, earth, air, aether), Alchemical symbols, Japanese Godai and Chinese Wu Xing. The bar marks the workspace you are on, the ones with windows and the empty ones; hover for a live preview of its windows, and a workspace blinks when one of its apps wants your attention. No dependencies, no network.",
+  "description": "Your workspaces as the five elements, in four traditions with their own design language: Elemental Art Deco, Alchemical, Japanese Godai and Chinese Wu Xing, each in a Light and a Bold. Hover for live window previews that scale with your screen; the element breathes when an app on that workspace wants your attention, browser tabs included. No dependencies, no network.",
   "kinds": [
     "bar-widget"
   ],
@@ -23,7 +23,8 @@
       "style": "elements",
       "colorMode": "elemental",
       "previewSize": "medium",
-      "notificationSpeed": "fast"
+      "notificationSpeed": "fast",
+      "previewCount": "auto"
     },
     "schema": [
       {
@@ -60,11 +61,11 @@
         "options": [
           {
             "value": "elemental",
-            "label": "Soft: the Light variant (paper, silk, vellum, cream)"
+            "label": "Soft: the Light variant (folio, vellum, rice paper, xuan paper)"
           },
           {
             "value": "bold",
-            "label": "Bold: the Bold variant (onyx, lacquer, void black)"
+            "label": "Bold: the Bold variant (lapis, void black, charred cedar, black lacquer)"
           },
           {
             "value": "theme",
@@ -76,7 +77,7 @@
         "key": "previewSize",
         "type": "enum",
         "label": "Floating Preview Size",
-        "description": "Choose the size of the floating workspace preview window shown on hover (Small, Medium, Large, or Off).",
+        "description": "Choose the size of the floating workspace preview window shown on hover (Small, Medium, Large, Extra large, or Off).",
         "defaultValue": "medium",
         "options": [
           {
@@ -94,6 +95,39 @@
           {
             "value": "large",
             "label": "Large (256×158 detailed thumbnails)"
+          },
+          {
+            "value": "xlarge",
+            "label": "Extra large"
+          }
+        ]
+      },
+      {
+        "key": "previewCount",
+        "type": "enum",
+        "label": "Windows in the Preview",
+        "description": "How many windows the hover preview shows. Auto shows as many as fit your screen at the chosen size (up to 9); a number shows that many if they fit. The rest are counted as '+N more'.",
+        "defaultValue": "auto",
+        "options": [
+          {
+            "value": "auto",
+            "label": "Auto"
+          },
+          {
+            "value": "2",
+            "label": "2"
+          },
+          {
+            "value": "4",
+            "label": "4"
+          },
+          {
+            "value": "6",
+            "label": "6"
+          },
+          {
+            "value": "9",
+            "label": "9"
           }
         ]
       },

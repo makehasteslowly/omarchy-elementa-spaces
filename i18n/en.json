@@ -15,6 +15,7 @@
   "style.wuxing": "Chinese Wu Xing",
   "menu.colors": "Colors",
   "menu.preview": "Preview",
+  "menu.windows": "Windows",
   "menu.blink": "Alert blink",
   "opt.soft": "Soft",
   "opt.bold": "Bold",
@@ -23,7 +24,9 @@
   "opt.small": "S",
   "opt.medium": "M",
   "opt.large": "L",
+  "opt.xlarge": "XL",
   "opt.slow": "Slow",
   "opt.steady": "Steady",
-  "opt.fast": "Fast"
+  "opt.fast": "Fast",
+  "opt.auto": "Auto"
 }

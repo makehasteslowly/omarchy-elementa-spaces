@@ -14,11 +14,10 @@ BarWidget {
   // on other monitors. (It was "omarchy.workspaces", the built-in widget's.)
   moduleName: "makehasteslowly.elementa"
 
-  // A skin's ground and frame, painted under a card's content (which sits
-  // `inset` in from the card edge). Grounds: flat or graded color, rice paper
-  // fibers, vellum with a darker edge, silk sheen, glossy lacquer. Frames: a
-  // line, a manuscript double rule, an Art Deco ziggurat (stepped corners with
-  // an inner rule), a stark block, a glowing neon line.
+  // A skin's ground and edge, painted under a card's content (which sits
+  // `inset` in from the card edge). Grounds: flat or softly graded color, rice
+  // paper fibers, vellum with a darker edge, a silk sheen. Edge: one hairline on
+  // continuous corners (Luminescence: a whisper of glow instead).
   component SkinGround: Canvas {
     property var skinSpec: null
     property color accent: Color.accent
@@ -39,93 +38,98 @@ BarWidget {
       var k = skinSpec
       if (!k) return
       var w = width, h = height, r = Math.min(radius, w / 2, h / 2)
+      // Continuous ("squircle") corner: the curve starts 1.6 r from the corner
+      // and eases in, instead of an abrupt quarter circle
       function shape(x, y, ww, hh, rr) {
+        var c = Math.min(rr * 1.6, ww / 2, hh / 2), p = c * 0.2
         ctx.beginPath()
-        ctx.moveTo(x + rr, y); ctx.lineTo(x + ww - rr, y); ctx.arcTo(x + ww, y, x + ww, y + rr, rr)
-        ctx.lineTo(x + ww, y + hh - rr); ctx.arcTo(x + ww, y + hh, x + ww - rr, y + hh, rr)
-        ctx.lineTo(x + rr, y + hh); ctx.arcTo(x, y + hh, x, y + hh - rr, rr)
-        ctx.lineTo(x, y + rr); ctx.arcTo(x, y, x + rr, y, rr)
-        ctx.closePath()
-      }
-      function stepped(x, y, ww, hh, st) {   // corners cut in two steps
-        ctx.beginPath()
-        ctx.moveTo(x + 2 * st, y); ctx.lineTo(x + ww - 2 * st, y)
-        ctx.lineTo(x + ww - 2 * st, y + st); ctx.lineTo(x + ww - st, y + st); ctx.lineTo(x + ww - st, y + 2 * st); ctx.lineTo(x + ww, y + 2 * st)
-        ctx.lineTo(x + ww, y + hh - 2 * st)
-        ctx.lineTo(x + ww - st, y + hh - 2 * st); ctx.lineTo(x + ww - st, y + hh - st); ctx.lineTo(x + ww - 2 * st, y + hh - st); ctx.lineTo(x + ww - 2 * st, y + hh)
-        ctx.lineTo(x + 2 * st, y + hh)
-        ctx.lineTo(x + 2 * st, y + hh - st); ctx.lineTo(x + st, y + hh - st); ctx.lineTo(x + st, y + hh - 2 * st); ctx.lineTo(x, y + hh - 2 * st)
-        ctx.lineTo(x, y + 2 * st)
-        ctx.lineTo(x + st, y + 2 * st); ctx.lineTo(x + st, y + st); ctx.lineTo(x + 2 * st, y + st); ctx.lineTo(x + 2 * st, y)
+        ctx.moveTo(x + c, y)
+        ctx.lineTo(x + ww - c, y);      ctx.bezierCurveTo(x + ww - p, y, x + ww, y + p, x + ww, y + c)
+        ctx.lineTo(x + ww, y + hh - c); ctx.bezierCurveTo(x + ww, y + hh - p, x + ww - p, y + hh, x + ww - c, y + hh)
+        ctx.lineTo(x + c, y + hh);      ctx.bezierCurveTo(x + p, y + hh, x, y + hh - p, x, y + hh - c)
+        ctx.lineTo(x, y + c);           ctx.bezierCurveTo(x, y + p, x + p, y, x + c, y)
         ctx.closePath()
       }
       var seed = 7
       function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647 }
-      var deco = k.frame === "ziggurat", st = k.frameWidth >= 2 ? 5 : 4
-      function outline() { if (deco) stepped(0.5, 0.5, w - 1, h - 1, st); else shape(0.5, 0.5, w - 1, h - 1, r) }
 
       // ground
-      outline()
+      shape(0.5, 0.5, w - 1, h - 1, r)
       ctx.save()
       ctx.clip()
       var g
       if (k.texture === "vellum") {
         g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.2, w / 2, h / 2, Math.max(w, h) * 0.75)
         g.addColorStop(0, k.bg); g.addColorStop(1, k.bg2)
-      } else if (k.texture === "lacquer") {
-        g = ctx.createLinearGradient(0, 0, 0, h)
-        g.addColorStop(0, k.bg); g.addColorStop(1, k.bg2)
       } else if (k.bg2) {
-        g = ctx.createLinearGradient(0, 0, w, h)
+        g = ctx.createLinearGradient(0, 0, 0, h)
         g.addColorStop(0, k.bg); g.addColorStop(1, k.bg2)
       } else g = k.bg
       ctx.fillStyle = g
       ctx.fillRect(0, 0, w, h)
       var i
       if (k.texture === "paper") {            // rice paper fibers
-        ctx.strokeStyle = "rgba(90, 75, 55, 0.05)"; ctx.lineWidth = 0.6
+        ctx.strokeStyle = "rgba(90, 75, 55, 0.045)"; ctx.lineWidth = 0.6
         for (i = 0; i < Math.round(w * h / 90); i++) {
           var px = rnd() * w, py = rnd() * h, a = rnd() * Math.PI, l = 2 + rnd() * 7
           ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + Math.cos(a) * l, py + Math.sin(a) * l); ctx.stroke()
         }
       } else if (k.texture === "vellum") {    // age speckles
-        ctx.fillStyle = "rgba(80, 55, 30, 0.07)"
+        ctx.fillStyle = "rgba(80, 55, 30, 0.06)"
         for (i = 0; i < Math.round(w * h / 160); i++) ctx.fillRect(rnd() * w, rnd() * h, 1, 1)
+      } else if (k.texture === "sunburst") {  // Art Deco rays from above the top center
+        ctx.fillStyle = k.rayColor
+        var ox = w / 2, oy = -h * 0.35, R = Math.hypot(w, h) * 1.4
+        for (i = 0; i < 26; i++) {
+          if (i % 2) continue
+          var a0 = Math.PI * (0.08 + 0.84 * i / 26), a1 = Math.PI * (0.08 + 0.84 * (i + 1) / 26)
+          ctx.beginPath(); ctx.moveTo(ox, oy)
+          ctx.lineTo(ox + Math.cos(a0) * R, oy + Math.sin(a0) * R)
+          ctx.lineTo(ox + Math.cos(a1) * R, oy + Math.sin(a1) * R)
+          ctx.closePath(); ctx.fill()
+        }
+      } else if (k.texture === "yakisugi") {  // charred cedar: soft wavy grain, a silver sheen
+        ctx.lineWidth = 1
+        for (i = 0; i < Math.round(h / 3.2); i++) {
+          var gy = i * 3.2 + rnd() * 1.6, amp = 0.8 + rnd() * 2.2, ph = rnd() * 6.28, f = 0.012 + rnd() * 0.02
+          ctx.strokeStyle = rnd() < 0.82 ? "rgba(0, 0, 0, 0.22)" : "rgba(200, 190, 175, " + (0.035 + rnd() * 0.04).toFixed(3) + ")"
+          ctx.beginPath()
+          for (var gx = 0; gx <= w; gx += 6) {
+            var yy = gy + Math.sin(gx * f + ph) * amp
+            if (gx === 0) ctx.moveTo(gx, yy); else ctx.lineTo(gx, yy)
+          }
+          ctx.stroke()
+        }
       } else if (k.texture === "silk") {      // a faint woven sheen
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.22)"; ctx.lineWidth = 1
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.18)"; ctx.lineWidth = 1
         for (i = -h; i < w; i += 7) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + h, h); ctx.stroke() }
-      } else if (k.texture === "lacquer") {   // the gloss along the top
-        var gl = ctx.createLinearGradient(0, 0, 0, h * 0.45)
-        gl.addColorStop(0, "rgba(255, 255, 255, 0.10)"); gl.addColorStop(1, "rgba(255, 255, 255, 0)")
-        ctx.fillStyle = gl; ctx.fillRect(0, 0, w, h * 0.45)
       }
       ctx.restore()
 
-      // frame
-      var fc = k.frameColor !== "" ? k.frameColor : String(accent)
-      var fw = k.frameWidth
-      ctx.lineJoin = "miter"
-      ctx.strokeStyle = fc
-      if (k.frame === "neon") {
-        ctx.shadowColor = fc; ctx.shadowBlur = 9; ctx.lineWidth = 1.2
-        shape(1, 1, w - 2, h - 2, r); ctx.stroke(); ctx.stroke()
-        ctx.shadowBlur = 0
-      } else if (deco) {
-        ctx.lineWidth = fw
-        stepped(fw / 2, fw / 2, w - fw, h - fw, st); ctx.stroke()
-        ctx.lineWidth = 1
-        ctx.globalAlpha = 0.7
-        stepped(fw + 3.5, fw + 3.5, w - 2 * fw - 7, h - 2 * fw - 7, st - 1); ctx.stroke()
+      // a scholar's seal: a small red chop in the top-right corner
+      if (k.seal) {
+        var sz = 9, sx = w - sz - 9, sy = 9
+        ctx.fillStyle = k.seal; ctx.globalAlpha = 0.9
+        ctx.fillRect(sx, sy, sz, sz)
         ctx.globalAlpha = 1
-      } else if (k.frame === "double") {
-        ctx.lineWidth = 1
-        shape(0.5, 0.5, w - 1, h - 1, r); ctx.stroke()
-        ctx.globalAlpha = 0.55
-        shape(3.5, 3.5, w - 7, h - 7, Math.max(0, r - 3)); ctx.stroke()
-        ctx.globalAlpha = 1
+        ctx.strokeStyle = String(Qt.color(k.bg)); ctx.lineWidth = 1
+        ctx.strokeRect(sx + 2.5, sy + 2.5, sz - 5, sz - 5)
+      }
+
+      // edge: one hairline; on a dark ground a faint inner highlight for depth
+      var dark = (Qt.color(k.bg).hslLightness < 0.5)
+      if (k.glow) {
+        ctx.strokeStyle = String(accent); ctx.globalAlpha = 0.85
+        ctx.shadowColor = String(accent); ctx.shadowBlur = 6; ctx.lineWidth = 1
+        shape(1, 1, w - 2, h - 2, r); ctx.stroke()
+        ctx.shadowBlur = 0; ctx.globalAlpha = 1
       } else {
-        ctx.lineWidth = fw
-        shape(fw / 2, fw / 2, w - fw, h - fw, Math.max(0, r - fw / 2)); ctx.stroke()
+        ctx.strokeStyle = k.hairline; ctx.lineWidth = 1
+        shape(0.5, 0.5, w - 1, h - 1, r); ctx.stroke()
+      }
+      if (dark && !k.stark) {
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.06)"; ctx.lineWidth = 1
+        shape(1.5, 1.5, w - 3, h - 3, Math.max(0, r - 1)); ctx.stroke()
       }
     }
   }
@@ -180,8 +184,8 @@ BarWidget {
   //              serif type, strictly linear motion
   //   Godai      zen minimalism: square corners, ink black and grays, color only
   //              where something is active, no transitions
-  //   Wu Xing    Taoist flow: heavy rounding, warm earth colors, long smooth
-  //              curves that settle with a gentle give
+  //   Wu Xing    scholar's discipline: nearly square corners, serif type and
+  //              Song-style kanji, calm deliberate motion, a red seal
   readonly property var looks: ({
     elements: { radius: 10, inner: 7,  border: 1.5, borderAlpha: 0.6,  font: "Noto Sans",         bg: "",        ink: false,
                 easing: Easing.OutBack, overshoot: 1.7, duration: 220 },
@@ -189,55 +193,57 @@ BarWidget {
                 easing: Easing.Linear,  overshoot: 0,   duration: 130 },
     godai:    { radius: 0,  inner: 0,  border: 1,   borderAlpha: 0.22, font: "Noto Serif CJK JP", bg: "#000000", ink: true,
                 easing: Easing.Linear,  overshoot: 0,   duration: 0 },
-    wuxing:   { radius: 16, inner: 11, border: 1.5, borderAlpha: 0.45, font: "Noto Sans",         bg: "",        ink: false,
-                easing: Easing.OutBack, overshoot: 1.15, duration: 420 }
+    wuxing:   { radius: 4,  inner: 2,  border: 1,   borderAlpha: 0.35, font: "Noto Serif",        bg: "",        ink: false,
+                easing: Easing.OutCubic, overshoot: 0, duration: 260 }
   })
   readonly property var look: root.looks[root.iconStyle] || root.looks.elements
 
-  // ---- Light (Soft) and Bold variants of each tradition: their own palette,
-  // card ground and frame. Theme keeps the Omarchy theme's colors instead.
-  //   Elemental  Art Deco. Light "Miami Deco": cream, pastel mint and peach,
-  //              brushed-nickel stepped frame. Bold "Onyx Opulence": jet black,
-  //              polished brass ziggurat frame, jewel tones
-  //   Alchemical Light "Parchment": sepia vellum, iron-gall ink, faded
-  //              marginalia colors. Bold "Luminescence": void black, neon lines
-  //   Godai      Light "Ink wash": rice paper, faded watercolor, soft
-  //              translucent grays. Bold "Stark": black and white only, fresh
-  //              cinnabar accents, thick blocks
-  //   Wu Xing    Light "Faded silk": pale jade and bamboo, thin round frame.
-  //              Bold "Imperial lacquer": cinnabar lacquer, polished gold frame
+  // ---- Light (Soft) and Bold variants of each tradition: their own palette
+  // and card ground, framed the way Apple frames things: a hairline edge (with a
+  // faint inner highlight on dark grounds) and continuous corners. Character
+  // comes from the ground, palette, type and corner size, not from ornament.
+  // Theme keeps the Omarchy theme's colors instead.
   readonly property var skins: ({
     elements: {
-      light: { palette: ["#F2A07B", "#8EC5E6", "#8FD8B5", "#9AD9D9", "#C7B2E6"],
-               bg: "#F8F1E4", bg2: "#F4E4D3", texture: "", text: "#3D3A36", accent: "#8D949A",
-               frame: "ziggurat", frameColor: "#A9AFB4", frameWidth: 1, radius: 0, inner: 0 },
-      bold:  { palette: ["#E8175D", "#2F6BE0", "#10A37F", "#14A8A8", "#9B5DE5"],
-               bg: "#0B0B0C", bg2: "#151412", texture: "", text: "#EDE3CF", accent: "#C9A44C",
-               frame: "ziggurat", frameColor: "#C9A44C", frameWidth: 3, radius: 0, inner: 0 }
+      // Folio: an aged page of The Secret Teachings of All Ages (1928), gold leaf,
+      // muted jewel colors, a faint gold sunburst
+      light: { palette: ["#B5432F", "#2E5A8A", "#3E7A4F", "#3F7E85", "#6B4C8C"],
+               bg: "#F0E6CC", bg2: "#E5D5AE", texture: "sunburst", rayColor: "rgba(150, 112, 30, 0.07)",
+               text: "#33291A", accent: "#9A7428", hairline: "rgba(150, 112, 30, 0.45)", radius: 12 },
+      // Lapis: midnight lapis lazuli, gold leaf, vivid jewel colors
+      bold:  { palette: ["#FF6B4A", "#5B9BFF", "#3CCB7F", "#62D3CC", "#C48EFF"],
+               bg: "#141C3A", bg2: "#0B1026", texture: "sunburst", rayColor: "rgba(212, 175, 55, 0.07)",
+               text: "#EAD9A6", accent: "#D4AF37", hairline: "rgba(212, 175, 55, 0.5)", radius: 12 }
     },
     alchemy: {
+      // Parchment: sepia vellum, iron-gall ink, faded marginalia colors
       light: { palette: ["#C98E7A", "#8FA9BC", "#A3B28E", "#A7C3C2", "#B9A5C2"],
-               bg: "#EADCBE", bg2: "#D3BC90", texture: "vellum", text: "#3A2C1E", accent: "#5A4632",
-               frame: "double", frameColor: "#5A4632", frameWidth: 1, radius: 0, inner: 0 },
+               bg: "#EADCBE", bg2: "#D9C49C", texture: "vellum", text: "#3A2C1E", accent: "#5A4632",
+               hairline: "rgba(58, 44, 30, 0.22)", radius: 10 },
+      // Luminescence: void black, the five colors as light
       bold:  { palette: ["#FF4A1C", "#00B7FF", "#39FF14", "#00FFE5", "#E040FB"],
-               bg: "#000000", bg2: "", texture: "", text: "#E8E8E8", accent: "#E8E8E8",
-               frame: "neon", frameColor: "", frameWidth: 1, radius: 0, inner: 0 }
+               bg: "#050505", bg2: "", texture: "", text: "#E8E8E8", accent: "#E8E8E8",
+               hairline: "", glow: true, radius: 10 }
     },
     godai: {
+      // Ink wash: rice paper, faded watercolor, soft grays
       light: { palette: ["#9DB58F", "#8FB1CC", "#D98E7E", "#9FC8C6", "#B7A6CC"],
                bg: "#F1EADB", bg2: "", texture: "paper", text: "#1E1E1E", accent: "#6B6B6B",
-               frame: "line", frameColor: "#5A5A5A59", frameWidth: 1, radius: 0, inner: 0, ink: "#CFCFCF" },
-      bold:  { palette: ["#E34234", "#E34234", "#E34234", "#E34234", "#E34234"],
-               bg: "#000000", bg2: "", texture: "", text: "#FFFFFF", accent: "#E34234", stark: true,
-               frame: "block", frameColor: "#FFFFFF", frameWidth: 3, radius: 0, inner: 0, ink: "#FFFFFF" }
+               hairline: "rgba(30, 30, 30, 0.16)", radius: 6, ink: "#CFCFCF" },
+      // Yakisugi (shou sugi ban): charred cedar, silver grain, one vermilion
+      bold:  { palette: ["#E2553F", "#E2553F", "#E2553F", "#E2553F", "#E2553F"],
+               bg: "#1A1512", bg2: "#100D0B", texture: "yakisugi", text: "#E8E1D6", accent: "#E2553F",
+               hairline: "rgba(232, 225, 214, 0.14)", radius: 6, ink: "#CFC7BB" }
     },
     wuxing: {
-      light: { palette: ["#A9C8A1", "#D9A28E", "#D8C48D", "#D6D2C4", "#9EBACB"],
-               bg: "#EEF3EA", bg2: "#E8E2CE", texture: "silk", text: "#3E4A3C", accent: "#8FAE87",
-               frame: "line", frameColor: "#B9C7B1", frameWidth: 1, radius: 20, inner: 12 },
-      bold:  { palette: ["#1FAF5A", "#FF3B1F", "#FFC21A", "#E8C766", "#2D6BFF"],
-               bg: "#5B0E0A", bg2: "#2A0403", texture: "lacquer", text: "#F6E7C1", accent: "#D4AF37",
-               frame: "line", frameColor: "#D4AF37", frameWidth: 3, radius: 16, inner: 10 }
+      // Xuan paper: the scholar's desk, ink-black type, sober ink colors, a red seal
+      light: { palette: ["#4F7A4F", "#B23A2A", "#A07A2E", "#6B6F74", "#2F4F6F"],
+               bg: "#F4EFE3", bg2: "#ECE5D4", texture: "paper", text: "#1C1A17", accent: "#B22222",
+               hairline: "rgba(28, 26, 23, 0.22)", radius: 4, seal: "#B22222" },
+      // Black lacquer: ash-ivory type, deeper ink colors, the same red seal
+      bold:  { palette: ["#6FAF7A", "#E2553F", "#D8A84A", "#C9CDD2", "#6E9CC9"],
+               bg: "#17130F", bg2: "#0C0A08", texture: "", text: "#EDE6D8", accent: "#C8322A",
+               hairline: "rgba(237, 230, 216, 0.14)", radius: 4, seal: "#C8322A" }
     }
   })
   readonly property string variant: root.useThemeColors ? "theme" : (root.useBoldColors ? "bold" : "light")
@@ -251,19 +257,18 @@ BarWidget {
   readonly property color cardText: root.skin ? Qt.color(root.skin.text) : Color.foreground
   readonly property color cardAccent: root.skin && root.skin.accent !== "" ? Qt.color(root.skin.accent) : Color.accent
   readonly property real cardRadius: root.skin ? root.skin.radius : root.look.radius
-  readonly property real cardInner: root.skin ? root.skin.inner : root.look.inner
+  readonly property real cardInner: root.skin ? Math.max(3, root.skin.radius - 6) : root.look.inner
   // Kanji in each tradition's hand: Mincho (brush) for Godai, gothic for Wu Xing
   function styleSurface(content) {
     var surface = content && content.parent ? content.parent.parent : null
     if (!surface || surface.radius === undefined) return
     surface.radius = Qt.binding(function() { return root.cardRadius })
-    surface.color = Qt.binding(function() {
-      return root.skin ? "transparent" : (root.look.bg !== "" ? Qt.color(root.look.bg) : Color.popups.background)
-    })
+    // A skin paints its own ground; Theme mode takes the theme's popup color
+    surface.color = Qt.binding(function() { return root.skin ? "transparent" : Color.popups.background })
   }
   function glyphFont(styleName) {
     if (styleName === "godai") return "Noto Serif CJK JP"
-    if (styleName === "wuxing") return "Noto Sans CJK JP"
+    if (styleName === "wuxing") return "Noto Serif CJK JP"   // Song (Ming) style, the scholar's printed hand
     return root.bar ? root.bar.fontFamily : Style.font.family
   }
 
@@ -318,12 +323,26 @@ BarWidget {
   readonly property real popupLuminance: 0.2126 * root.effectivePopupBg.r + 0.7152 * root.effectivePopupBg.g + 0.0722 * root.effectivePopupBg.b
   readonly property bool isLightPopup: root.popupLuminance > 0.48
 
-  // Floating hover preview size setting: "off" | "small" | "medium" | "large" (defaults to "medium")
+  // How many windows the preview shows: "auto" (as many as fit the screen at
+  // the chosen size, up to 9) or 2 / 4 / 6 / 9 (as many of those as fit)
+  property string localPreviewCountOverride: ""
+  readonly property string previewCount: {
+    var v = root.localPreviewCountOverride !== "" ? root.localPreviewCountOverride : String(root.setting("previewCount", "auto")).toLowerCase()
+    return ["auto", "2", "4", "6", "9"].indexOf(v) >= 0 ? v : "auto"
+  }
+  function selectPreviewCount(v) {
+    var n = ["auto", "2", "4", "6", "9"].indexOf(v) >= 0 ? v : "auto"
+    root.localPreviewCountOverride = n
+    if (root.bar) root.bar.run("omarchy-bar set " + Util.shellQuote(root.pluginId) + " previewCount " + Util.shellQuote(n))
+    root.showSizeSample()
+  }
+
+  // Floating hover preview size setting: "off" | "small" | "medium" | "large" | "xlarge" (defaults to "medium")
   property string localPreviewSizeOverride: ""
   readonly property string configuredPreviewSize: {
     if (root.settings && root.settings.previewSize !== undefined && root.settings.previewSize !== null) {
       var s = String(root.settings.previewSize).toLowerCase()
-      if (s === "off" || s === "small" || s === "medium" || s === "large") return s
+      if (s === "off" || s === "small" || s === "medium" || s === "large" || s === "xlarge") return s
     }
     if (root.settings && root.settings.showPreview !== undefined && root.settings.showPreview !== null) {
       var v = root.settings.showPreview
@@ -897,10 +916,11 @@ BarWidget {
   }
 
   function selectPreviewSize(nextSize) {
-    var normalized = (nextSize === "off" || nextSize === "small" || nextSize === "large")
+    var normalized = (nextSize === "off" || nextSize === "small" || nextSize === "large" || nextSize === "xlarge")
       ? nextSize : "medium"
     root.localPreviewSizeOverride = normalized
     if (normalized === "off") root.previewOpen = false
+    else root.showSizeSample()
     if (root.bar) {
       root.bar.run("omarchy-bar set " + Util.shellQuote(root.pluginId) + " previewSize " + Util.shellQuote(normalized))
     }
@@ -1044,6 +1064,26 @@ BarWidget {
     }
   }
 
+  // Middle-click on a window in the preview: close it the polite way (like
+  // Super+W); the app may still ask to save first
+  function closeWindow(toplevelObj) {
+    var address = toplevelObj ? String(toplevelObj.address || "") : ""
+    if (!address) return
+    if (address.indexOf("0x") !== 0) address = "0x" + address
+    root.dispatch("hl.dsp.window.close({ window = \"address:" + address + "\" })")
+  }
+
+  // The app icon for a window class, from its desktop entry (or the icon theme)
+  function appIconFor(cls) {
+    var name = String(cls || "")
+    if (!name) return ""
+    var _apps = DesktopEntries.applications.values.length   // re-resolve when apps change
+    var entry = DesktopEntries.heuristicLookup(name)
+    var icon = entry && entry.icon ? String(entry.icon) : name
+    if (icon.charAt(0) === "/") return "file://" + icon
+    return Quickshell.iconPath(icon, true) || Quickshell.iconPath(name.toLowerCase(), true) || ""
+  }
+
   property real wheelAccumulator: 0
 
   function scrollWorkspaces(delta) {
@@ -1097,6 +1137,22 @@ BarWidget {
     ], "wuxing")
   })
 
+  function relLum(c) {
+    function ch(v) { return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4) }
+    return 0.2126 * ch(c.r) + 0.7152 * ch(c.g) + 0.0722 * ch(c.b)
+  }
+  function contrastRatio(a, b) {
+    var la = root.relLum(a), lb = root.relLum(b)
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05)
+  }
+  function withContrast(c, bg, minRatio) {
+    var out = c
+    var lightGround = root.relLum(bg) > 0.4
+    for (var i = 0; i < 12 && root.contrastRatio(out, bg) < minRatio; i++)
+      out = lightGround ? Qt.darker(out, 1.12) : Qt.lighter(out, 1.12)
+    return out
+  }
+
   function resolveElementColor(item, forPopup, isHighlighted) {
     if (!item) return Color.foreground
     var sk = root.skinFor(item.pack || root.iconStyle)
@@ -1126,6 +1182,12 @@ BarWidget {
       hex = onLight ? (item.lightColor || item.color) : item.color
     }
     var c = Qt.color(hex)
+    // Every element color must read against its ground: at least 3:1 (WCAG's
+    // bar for icons). Short of that it is deepened on a light ground and
+    // lightened on a dark one, keeping its hue (faded watercolor on rice paper,
+    // blue on cinnabar lacquer).
+    if (forPopup && root.skin) return root.withContrast(c, Qt.color(root.skin.bg), 3.0)
+    if (!forPopup && root.skin) return root.withContrast(c, root.effectiveBarBg, 3.0)   // the bar is the ground here
     var cLum = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b
     var bgLum = onLight ? root.popupLuminance : root.barLuminance
     if (!forPopup) bgLum = root.barLuminance
@@ -1258,6 +1320,33 @@ BarWidget {
     }
   }
 
+  // After a preview size is picked: close the menu (previews never show over it)
+  // and show the preview at the new size for a moment, on the workspace the menu
+  // was opened from (or the one you are on), so the choice is seen at once
+  function showSizeSample() {
+    root.pickerOpen = false
+    if (root.hoveredWorkspaceId <= 0 || !root.hoveredAnchorItem) {
+      root.hoveredWorkspaceId = root.activeWorkspaceId()
+      root.hoveredAnchorItem = root.buttonForWorkspace(root.hoveredWorkspaceId)
+    }
+    if (root.hoveredWorkspaceId <= 0 || !root.hoveredAnchorItem) return
+    Hyprland.refreshToplevels()
+    root.previewOpen = true
+    sizeSampleTimer.restart()
+  }
+  function buttonForWorkspace(wsId) {
+    for (var i = 0; i < wsRepeater.count; i++) {
+      var b = wsRepeater.itemAt(i)
+      if (b && b.modelData === wsId) return b
+    }
+    return null
+  }
+  Timer {
+    id: sizeSampleTimer
+    interval: 2600
+    onTriggered: if (!previewPopup.containsMouse) root.previewOpen = false
+  }
+
   function handleButtonHover(wsId, buttonItem, isHovered) {
     if (isHovered) {
       previewCloseTimer.stop()
@@ -1364,6 +1453,7 @@ BarWidget {
     rowSpacing: root.vertical ? Style.space(2) : 0
 
     Repeater {
+      id: wsRepeater
       model: root.workspaceIds()
 
       WidgetButton {
@@ -1496,14 +1586,25 @@ BarWidget {
     readonly property int slot: root.slotOf(wsId)
     readonly property var element: root.elementForSlot(slot, root.iconStyle, true, true)
     readonly property var workspaceObj: root.workspaceById(wsId)
+    // What fits on this screen at this size: up to 3 columns and 3 rows
+    readonly property int fitCols: Math.max(1, Math.min(3, Math.floor((screenWidth - 2 * margin - 2 * padding + Style.space(8)) / (cardThumbW + Style.space(8)))))
+    readonly property real availHeight: (screenH > 0 ? screenH : 864) - barThickness - 2 * margin - 2 * padding - Style.space(64)
+    readonly property int fitRows: Math.max(1, Math.min(3, Math.floor((availHeight + Style.space(8)) / (cardThumbH + Style.space(8)))))
+    readonly property int maxWindows: {
+      var cap = fitCols * fitRows
+      return root.previewCount === "auto" ? Math.min(9, cap) : Math.min(parseInt(root.previewCount), cap)
+    }
     readonly property var windowList: {
       if (!workspaceObj || !workspaceObj.toplevels) return []
       var raw = workspaceObj.toplevels.values
-      var out = []
-      for (var i = 0; i < raw.length && out.length < 4; i++) {
-        if (raw[i]) out.push(raw[i])
+      // Windows asking for attention first, so the one that flashes is always on
+      // the card even when the workspace has more windows than the grid shows
+      var asking = [], rest = []
+      for (var i = 0; i < raw.length; i++) {
+        if (!raw[i]) continue
+        if (root.windowNotificationLabel(raw[i]) !== "") asking.push(raw[i]); else rest.push(raw[i])
       }
-      return out
+      return asking.concat(rest).slice(0, maxWindows)
     }
     readonly property int totalWindowCount: workspaceObj && workspaceObj.toplevels ? workspaceObj.toplevels.values.length : 0
     readonly property bool isFocusedWs: root.activeWorkspaceId() === wsId
@@ -1517,21 +1618,20 @@ BarWidget {
                                   : Qt.alpha(Qt.color(previewPopup.element.color), root.look.borderAlpha), root.look.border)
     onOpenChanged: if (open) root.refresh()   // the layout label is never stale
 
-    readonly property real cardThumbW: root.previewSize === "small"
-      ? Style.space(140)
-      : (root.previewSize === "large" ? Style.space(256) : Style.space(188))
-    readonly property real cardThumbH: root.previewSize === "small"
-      ? Style.space(88)
-      : (root.previewSize === "large" ? Style.space(158) : Style.space(116))
-    readonly property int captureW: root.previewSize === "small" ? 280 : (root.previewSize === "large" ? 512 : 360)
-    readonly property int captureH: root.previewSize === "small" ? 176 : (root.previewSize === "large" ? 320 : 225)
-    readonly property real emptyW: root.previewSize === "small"
-      ? Style.space(196)
-      : (root.previewSize === "large" ? Style.space(272) : Style.space(224))
-    readonly property real emptyH: root.previewSize === "small"
-      ? Style.space(52)
-      : (root.previewSize === "large" ? Style.space(76) : Style.space(64))
-    readonly property int columnsCount: windowList.length <= 1 ? 1 : 2
+    // Sizes scale with the screen: a thumbnail is a share of the screen's width
+    // (S 17%, M 22%, L 28%, XL 34%), 16:10, never so wide that two side by side
+    // leave the screen. Captures are taken at twice the size so they stay sharp.
+    readonly property real fraction: ({ small: 0.17, medium: 0.22, large: 0.28, xlarge: 0.34 })[root.previewSize] || 0.22
+    readonly property real screenWidth: previewPopup.screenW > 0 ? previewPopup.screenW : 1536
+    readonly property real twoUpMax: (screenWidth - 2 * previewPopup.margin - 2 * previewPopup.padding - Style.space(8)) / 2
+    readonly property real cardThumbW: Math.round(Math.max(140, Math.min(screenWidth * fraction, twoUpMax)))
+    readonly property real cardThumbH: Math.round(cardThumbW * 0.625)
+    readonly property int captureW: Math.round(cardThumbW * 2)
+    readonly property int captureH: Math.round(cardThumbH * 2)
+    readonly property real emptyW: Math.round(Math.max(Style.space(196), cardThumbW * 0.9))
+    readonly property real emptyH: Math.round(Math.max(Style.space(52), cardThumbH * 0.36))
+    // 1 window: one column; up to 4: two; more: three, if they fit
+    readonly property int columnsCount: windowList.length <= 1 ? 1 : (windowList.length <= 4 ? Math.min(2, fitCols) : fitCols)
 
     contentWidth: windowList.length === 0
       ? emptyW
@@ -1557,7 +1657,8 @@ BarWidget {
       height: 2
       radius: 1
       x: targetX - width / 2
-      y: -previewPopup.padding
+      // On a skin it sits just inside the frame, like an inlay
+      y: -previewPopup.padding + (root.skin ? 2 : 0)
       color: previewPopup.element.color
     }
 
@@ -1707,6 +1808,7 @@ BarWidget {
             readonly property bool winActive: modelData ? Boolean(modelData.activated) : false
             readonly property string winNotifLabel: root.windowNotificationLabel(modelData)
             readonly property bool winNotified: winNotifLabel !== ""
+            readonly property string appIcon: root.appIconFor(winClass)
             readonly property int strokeW: (winMouse.containsMouse || winActive || winNotified) ? 2 : 1
 
             Layout.preferredWidth: previewPopup.cardThumbW
@@ -1802,6 +1904,20 @@ BarWidget {
                   Layout.alignment: Qt.AlignVCenter
                 }
 
+                // The app's own icon, when it has one
+                Image {
+                  visible: winCard.appIcon !== "" && status === Image.Ready
+                  source: winCard.appIcon
+                  Layout.preferredWidth: Style.space(14)
+                  Layout.preferredHeight: Style.space(14)
+                  Layout.alignment: Qt.AlignVCenter
+                  sourceSize.width: Style.space(28)
+                  sourceSize.height: Style.space(28)
+                  fillMode: Image.PreserveAspectFit
+                  asynchronous: true
+                  smooth: true
+                }
+
                 Text {
                   Layout.fillWidth: true
                   Layout.alignment: Qt.AlignVCenter
@@ -1838,18 +1954,22 @@ BarWidget {
               anchors.fill: parent
               hoverEnabled: true
               cursorShape: Qt.PointingHandCursor
-              onClicked: root.focusWindow(winCard.modelData, previewPopup.wsId)
+              acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+              onClicked: function(mouse) {
+                if (mouse.button === Qt.MiddleButton) root.closeWindow(winCard.modelData)
+                else root.focusWindow(winCard.modelData, previewPopup.wsId)
+              }
             }
           }
         }
       }
 
-      // Overflow footer when > 4 windows are on the workspace
+      // Overflow footer for the windows that are not shown
       Text {
-        visible: previewPopup.totalWindowCount > 4
+        visible: previewPopup.totalWindowCount > previewPopup.windowList.length
         Layout.alignment: Qt.AlignRight
         textFormat: Text.PlainText
-        text: strings.t("preview.more").arg(previewPopup.totalWindowCount - 4)
+        text: strings.t("preview.more").arg(previewPopup.totalWindowCount - previewPopup.windowList.length)
         color: root.cardText
         opacity: 0.55
         font.family: root.look.font
@@ -1910,14 +2030,15 @@ BarWidget {
 
           Layout.fillWidth: true
           Layout.preferredHeight: Style.space(32)
-          bordered: true
+          bordered: !root.skin   // on a skin: quiet filled chips, no theme-colored outlines
+            radius: root.skin ? Math.max(4, root.cardRadius - 6) : Style.cornerRadius
           foreground: root.cardText
           accent: root.cardAccent
           fontFamily: root.look.font
           // On a skin the selection is drawn here (the theme's selected color is fixed
           // and can vanish on the light grounds)
           selected: !root.skin && (root.iconStyle === choiceKey)
-          background: root.skin && (root.iconStyle === choiceKey) ? Qt.alpha(root.cardText, 0.14) : "transparent"
+          background: !root.skin ? "transparent" : ((root.iconStyle === choiceKey) ? Qt.alpha(root.cardText, 0.16) : Qt.alpha(root.cardText, 0.05))
           onClicked: root.selectStyle(choiceKey)
 
           RowLayout {
@@ -2019,14 +2140,15 @@ BarWidget {
             Layout.fillWidth: true
             Layout.preferredWidth: 1   // equal segments
             Layout.preferredHeight: Style.space(28)
-            bordered: true
+            bordered: !root.skin   // on a skin: quiet filled chips, no theme-colored outlines
+            radius: root.skin ? Math.max(4, root.cardRadius - 6) : Style.cornerRadius
             foreground: root.cardText
             accent: root.cardAccent
             fontFamily: root.look.font
             // On a skin the selection is drawn here (the theme's selected color is fixed
             // and can vanish on the light grounds)
             selected: !root.skin && (root.colorMode === modelData.key)
-            background: root.skin && (root.colorMode === modelData.key) ? Qt.alpha(root.cardText, 0.14) : "transparent"
+            background: !root.skin ? "transparent" : ((root.colorMode === modelData.key) ? Qt.alpha(root.cardText, 0.16) : Qt.alpha(root.cardText, 0.05))
             text: modelData.label
             onClicked: root.selectColorMode(modelData.key)
           }
@@ -2053,7 +2175,8 @@ BarWidget {
             { key: "off",    label: strings.t("opt.off") },
             { key: "small",  label: strings.t("opt.small") },
             { key: "medium", label: strings.t("opt.medium") },
-            { key: "large",  label: strings.t("opt.large") }
+            { key: "large",  label: strings.t("opt.large") },
+            { key: "xlarge", label: strings.t("opt.xlarge") }
           ]
 
           Button {
@@ -2061,16 +2184,62 @@ BarWidget {
             Layout.fillWidth: true
             Layout.preferredWidth: 1   // equal segments
             Layout.preferredHeight: Style.space(28)
-            bordered: true
+            bordered: !root.skin   // on a skin: quiet filled chips, no theme-colored outlines
+            radius: root.skin ? Math.max(4, root.cardRadius - 6) : Style.cornerRadius
             foreground: root.cardText
             accent: root.cardAccent
             fontFamily: root.look.font
             // On a skin the selection is drawn here (the theme's selected color is fixed
             // and can vanish on the light grounds)
             selected: !root.skin && (root.previewSize === modelData.key)
-            background: root.skin && (root.previewSize === modelData.key) ? Qt.alpha(root.cardText, 0.14) : "transparent"
+            background: !root.skin ? "transparent" : ((root.previewSize === modelData.key) ? Qt.alpha(root.cardText, 0.16) : Qt.alpha(root.cardText, 0.05))
             text: modelData.label
             onClicked: root.selectPreviewSize(modelData.key)
+          }
+        }
+      }
+
+      // How many windows the preview shows
+      RowLayout {
+        Layout.fillWidth: true
+        spacing: Style.space(4)
+
+        Text {
+          Layout.preferredWidth: Style.space(102)
+          Layout.alignment: Qt.AlignVCenter
+          textFormat: Text.PlainText
+          text: strings.t("menu.windows")
+          color: root.cardText
+          font.family: root.look.font
+          font.pixelSize: Style.font.body
+          elide: Text.ElideRight
+        }
+
+        Repeater {
+          model: [
+            { key: "auto", label: strings.t("opt.auto") },
+            { key: "2",    label: "2" },
+            { key: "4",    label: "4" },
+            { key: "6",    label: "6" },
+            { key: "9",    label: "9" }
+          ]
+
+          Button {
+            required property var modelData
+            Layout.fillWidth: true
+            Layout.preferredWidth: 1   // equal segments
+            Layout.preferredHeight: Style.space(28)
+            bordered: !root.skin
+            radius: root.skin ? Math.max(4, root.cardRadius - 6) : Style.cornerRadius
+            foreground: root.cardText
+            accent: root.cardAccent
+            fontFamily: root.look.font
+            enabled: root.showPreview
+            opacity: root.showPreview ? 1 : 0.4
+            selected: !root.skin && (root.previewCount === modelData.key)
+            background: !root.skin ? "transparent" : ((root.previewCount === modelData.key) ? Qt.alpha(root.cardText, 0.16) : Qt.alpha(root.cardText, 0.05))
+            text: modelData.label
+            onClicked: root.selectPreviewCount(modelData.key)
           }
         }
       }
@@ -2104,19 +2273,21 @@ BarWidget {
             Layout.fillWidth: true
             Layout.preferredWidth: 1   // equal segments
             Layout.preferredHeight: Style.space(28)
-            bordered: true
+            bordered: !root.skin   // on a skin: quiet filled chips, no theme-colored outlines
+            radius: root.skin ? Math.max(4, root.cardRadius - 6) : Style.cornerRadius
             foreground: root.cardText
             accent: root.cardAccent
             fontFamily: root.look.font
             // On a skin the selection is drawn here (the theme's selected color is fixed
             // and can vanish on the light grounds)
             selected: !root.skin && (root.notificationSpeed === modelData.key)
-            background: root.skin && (root.notificationSpeed === modelData.key) ? Qt.alpha(root.cardText, 0.14) : "transparent"
+            background: !root.skin ? "transparent" : ((root.notificationSpeed === modelData.key) ? Qt.alpha(root.cardText, 0.16) : Qt.alpha(root.cardText, 0.05))
             text: modelData.label
             onClicked: root.selectNotificationSpeed(modelData.key)
           }
         }
       }
+
     }
   }
 }
