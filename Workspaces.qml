@@ -269,7 +269,12 @@ BarWidget {
   function glyphFont(styleName) {
     if (styleName === "godai") return "Noto Serif CJK JP"
     if (styleName === "wuxing") return "Noto Serif CJK JP"   // Song (Ming) style, the scholar's printed hand
-    return root.bar ? root.bar.fontFamily : Style.font.family
+    // The elemental icons come from a Nerd Font. If the bar's font is one, use
+    // it; otherwise name Omarchy's own (installed on every system) rather than
+    // leave the icons to font fallback, so the font that draws an icon is also
+    // the one its ink is measured in (see inkShift)
+    var bf = root.bar ? String(root.bar.fontFamily) : String(Style.font.family)
+    return /nerd font|\bnf\b/i.test(bf) ? bf : "JetBrainsMono Nerd Font"
   }
 
   Commons.Translations {
@@ -1125,9 +1130,9 @@ BarWidget {
     elements: root.indexed([
       { icon: "󰈸", glyphScale: 1.29, alchemyKind: "fire",   name: "Fire",   color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
       { icon: "󰖌", glyphScale: 1.38, alchemyKind: "water",  name: "Water",  color: "#38BDF8", boldColor: "#0088FF", lightColor: "#0284C7", boldLightColor: "#0055D4" },
-      { icon: "󰌪", glyphScale: 1.24, dx: -0.06, alchemyKind: "earth",  name: "Earth",  color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
+      { icon: "󰌪", glyphScale: 1.24, alchemyKind: "earth",  name: "Earth",  color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
       { icon: "󰖝", glyphScale: 1.19, alchemyKind: "air",    name: "Air",    color: "#67E8F9", boldColor: "#00F0FF", lightColor: "#0E7490", boldLightColor: "#007A8C" },
-      { icon: "󰫢", glyphScale: 1.06, dx: -0.24, alchemyKind: "aether", name: "Aether", color: "#C084FC", boldColor: "#B829FF", lightColor: "#7E22CE", boldLightColor: "#6B00D7" }
+      { icon: "󰫢", glyphScale: 1.06, alchemyKind: "aether", name: "Aether", color: "#C084FC", boldColor: "#B829FF", lightColor: "#7E22CE", boldLightColor: "#6B00D7" }
     ], "elements"),
     alchemy: root.indexed([
       { icon: "🜂", glyphScale: 1.0,  alchemyKind: "fire",   name: "Fire",   color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
@@ -1216,6 +1221,18 @@ BarWidget {
     return c
   }
 
+  // Nerd Font icons are often drawn off-center in their character cell (the
+  // Earth leaf, the Air swirl and the Aether star sit right of center by 0.1
+  // to 0.2 em in every Nerd Font). The elemental icons are centered on their
+  // measured ink instead, in whatever font the bar uses. Kanji keep their
+  // designed centering: a CJK character is centered in its square on purpose.
+  // m measures the glyph at 200 px (small sizes round the ink box to whole
+  // pixels); the shift is scaled to the size the glyph is drawn at (px)
+  function inkShift(m, px) {
+    if (!m || m.advanceWidth <= 0 || !(px > 0)) return 0
+    var r = m.tightBoundingRect
+    return Math.round(-(r.x + r.width / 2 - m.advanceWidth / 2) * (px / 200) * 2) / 2
+  }
   function elementForSlot(slot, styleName, forPopup, isHighlighted) {
     var list = root.packs[styleName] || root.packs.elements
     var idx = ((slot - 1) % list.length + list.length) % list.length
@@ -1223,7 +1240,6 @@ BarWidget {
     return {
       icon: raw.icon,
       glyphScale: raw.glyphScale,
-      dx: raw.dx || 0,   // optical correction: some glyphs sit off-center in their font box
       alchemyKind: raw.alchemyKind,
       ink: Boolean(raw.ink),
       k: raw.k,
@@ -1531,6 +1547,7 @@ BarWidget {
 
         // Uniform-size glyph/kanji renderer (exact 12px ink height across elements, godai, and wuxing).
         Text {
+          id: glyphBar
           visible: !wsBtn.useAlchemy
           anchors.centerIn: parent
           anchors.verticalCenterOffset: -1
@@ -1541,11 +1558,12 @@ BarWidget {
           font.family: root.glyphFont(root.iconStyle)
           font.weight: wsBtn.isCjk ? Font.DemiBold : Font.Normal
           font.pixelSize: Math.round(root.uniformIconSize * wsBtn.element.glyphScale)
-          anchors.horizontalCenterOffset: Math.round(font.pixelSize * wsBtn.element.dx * 2) / 2
+          anchors.horizontalCenterOffset: root.iconStyle === "elements" ? root.inkShift(inkBar, font.pixelSize) : 0
           renderType: Text.CurveRendering
           horizontalAlignment: Text.AlignHCenter
           verticalAlignment: Text.AlignVCenter
           scale: wsBtn.pressScale * wsBtn.blinkScale
+          TextMetrics { id: inkBar; text: glyphBar.text; font.family: glyphBar.font.family; font.weight: glyphBar.font.weight; font.pixelSize: 200 }
         }
 
         // Alchemical symbols are drawn (exact 12px outer bounds, like the other packs)
@@ -1705,6 +1723,7 @@ BarWidget {
           Layout.alignment: Qt.AlignVCenter
 
           Text {
+            id: glyphHead
             visible: root.iconStyle !== "alchemy"
             anchors.centerIn: parent
             textFormat: Text.PlainText
@@ -1714,8 +1733,9 @@ BarWidget {
             font.weight: (root.iconStyle === "godai" || root.iconStyle === "wuxing")
               ? Font.DemiBold : Font.Normal
             font.pixelSize: Math.round(root.uniformIconSize * previewPopup.element.glyphScale)
-            anchors.horizontalCenterOffset: Math.round(font.pixelSize * previewPopup.element.dx * 2) / 2
+            anchors.horizontalCenterOffset: root.iconStyle === "elements" ? root.inkShift(inkHead, font.pixelSize) : 0
             renderType: Text.CurveRendering
+            TextMetrics { id: inkHead; text: glyphHead.text; font.family: glyphHead.font.family; font.weight: glyphHead.font.weight; font.pixelSize: 200 }
           }
 
           AlchemyGlyph {
@@ -2080,6 +2100,7 @@ BarWidget {
                   height: 16
 
                   Text {
+                    id: glyphMenu
                     visible: choiceBtn.choiceKey !== "alchemy"
                     anchors.centerIn: parent
                     textFormat: Text.PlainText
@@ -2089,10 +2110,11 @@ BarWidget {
                     font.weight: (choiceBtn.choiceKey === "godai" || choiceBtn.choiceKey === "wuxing")
                       ? Font.DemiBold : Font.Normal
                     font.pixelSize: Math.round(root.uniformIconSize * modelData.glyphScale)
-                    anchors.horizontalCenterOffset: Math.round(font.pixelSize * (modelData.dx || 0) * 2) / 2
+                    anchors.horizontalCenterOffset: choiceBtn.choiceKey === "elements" ? root.inkShift(inkMenu, font.pixelSize) : 0
                     renderType: Text.CurveRendering
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
+                    TextMetrics { id: inkMenu; text: glyphMenu.text; font.family: glyphMenu.font.family; font.weight: glyphMenu.font.weight; font.pixelSize: 200 }
                   }
 
                   AlchemyGlyph {

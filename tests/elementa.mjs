@@ -214,6 +214,33 @@ for (const k of used) {
   ok(new Set(holes).size === holes.length, `string "${k}" has no repeated placeholder`)
 }
 
+// =========================================================================
+// Ink centering of the elemental icons
+// The icon font: the bar's own if it is a Nerd Font, else Omarchy's (never
+// left to fallback, so the font that draws an icon is the one it is measured in)
+for (const [barFont, want] of [["Liberation Mono", "JetBrainsMono Nerd Font"], ["CaskaydiaMono Nerd Font", "CaskaydiaMono Nerd Font"],
+                               ["JetBrainsMono NF", "JetBrainsMono NF"], ["Adwaita Mono", "JetBrainsMono Nerd Font"]]) {
+  const G = { bar: { fontFamily: barFont } }
+  const glyphFont = fn("glyphFont", { root: G, Qt, Util: ctx.Util })
+  eq(glyphFont("elements"), want, `elemental icons on a "${barFont}" bar are drawn in`)
+  eq(glyphFont("godai"), "Noto Serif CJK JP", `Godai kanji on a "${barFont}" bar`)
+}
+// The shift: ink measured at 200 px, scaled to the drawn size, in half pixels
+const inkShift = fn("inkShift", ctx)
+const metrics = (x, w, adv) => ({ tightBoundingRect: { x, width: w }, advanceWidth: adv })
+eq(inkShift(metrics(0, 150, 150), 13), 0, "centered ink -> no shift")
+eq(inkShift(metrics(0, 214, 120), 13), -3, "ink 47 px right of center at 200 px -> 3 px left at 13 px")
+eq(inkShift(metrics(-40, 140, 100), 12), 1, "ink 20 px left of center at 200 px -> 1 px right at 12 px")
+eq(inkShift(metrics(0, 10, 0), 12), 0, "no advance -> no shift")
+eq(inkShift(null, 12), 0, "no metrics -> no shift")
+// All three renderers use it, in the Elemental tradition only, measured at 200 px
+for (const [id, metricsId] of [["glyphBar", "inkBar"], ["glyphHead", "inkHead"], ["glyphMenu", "inkMenu"]]) {
+  ok(qml.includes(`TextMetrics { id: ${metricsId}; text: ${id}.text; font.family: ${id}.font.family; font.weight: ${id}.font.weight; font.pixelSize: 200 }`),
+    `${id} is measured by ${metricsId} in its own font, at 200 px`)
+  ok(new RegExp(`=== "elements" \\? root\\.inkShift\\(${metricsId}, font\\.pixelSize\\) : 0`).test(qml), `${id} is ink-centered in Elemental only`)
+}
+ok(!/\bdx:\s*-?\d/.test(qml), "no hand-tuned per-glyph offsets left")
+
 ok(!qml.includes("TMP-TEST"), "no TMP-TEST hook left in Workspaces.qml")
 
 console.log(`Elementa: ${checks - failures}/${checks} checks pass`)
