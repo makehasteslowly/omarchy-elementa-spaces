@@ -162,6 +162,10 @@ omarchy plugin remove elemental-workspace-indicator
 omarchy plugin add https://github.com/makehasteslowly/omarchy-elementa-spaces.git --enable
 ```
 
+## Tests
+
+`node tests/elementa.mjs` runs the widget's own functions, lifted from `Workspaces.qml`: which window a notification blinks, unread-badge titles, the order of each tradition's elements, 3:1 contrast for every skin color on light, dark and mid-gray bars, every setting's options, and the translations.
+
 ## Uninstall
 
 ```bash
