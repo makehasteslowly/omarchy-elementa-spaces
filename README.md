@@ -4,7 +4,7 @@
 
 *Elementa*, Latin for "the elements". Each workspace on your bar becomes an element (fire, water, earth, air, aether, or their counterparts in three other traditions), drawn in its own color. Hover one to see its windows live; when an app on another workspace wants your attention, its element breathes until you look.
 
-![The preview card in each tradition: Light above, Bold below](preview.png)
+![Hover a workspace to see its windows live; when a window gets a message, its element breathes on the bar and its card flashes in the preview](docs/demo.gif)
 
 ```bash
 omarchy plugin add https://github.com/makehasteslowly/omarchy-elementa-spaces.git --enable
@@ -15,6 +15,8 @@ omarchy plugin add https://github.com/makehasteslowly/omarchy-elementa-spaces.gi
 ## Four traditions, each in a Light and a Bold
 
 Right-click any element on the bar and pick a tradition, then **Soft** (Light), **Bold** or **Theme**. The choice changes more than the symbols: the preview card, the menu, the type and the motion follow it.
+
+![The preview card in each tradition: Light above, Bold below](preview.png)
 
 | | Symbols | Light (Soft) | Bold |
 |---|---|---|---|
