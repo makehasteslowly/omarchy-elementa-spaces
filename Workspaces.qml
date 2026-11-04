@@ -1125,9 +1125,9 @@ BarWidget {
     elements: root.indexed([
       { icon: "󰈸", glyphScale: 1.29, alchemyKind: "fire",   name: "Fire",   color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
       { icon: "󰖌", glyphScale: 1.38, alchemyKind: "water",  name: "Water",  color: "#38BDF8", boldColor: "#0088FF", lightColor: "#0284C7", boldLightColor: "#0055D4" },
-      { icon: "󰌪", glyphScale: 1.24, alchemyKind: "earth",  name: "Earth",  color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
+      { icon: "󰌪", glyphScale: 1.24, dx: -0.06, alchemyKind: "earth",  name: "Earth",  color: "#4ADE80", boldColor: "#00E640", lightColor: "#15803D", boldLightColor: "#008A2E" },
       { icon: "󰖝", glyphScale: 1.19, alchemyKind: "air",    name: "Air",    color: "#67E8F9", boldColor: "#00F0FF", lightColor: "#0E7490", boldLightColor: "#007A8C" },
-      { icon: "󰫢", glyphScale: 1.06, alchemyKind: "aether", name: "Aether", color: "#C084FC", boldColor: "#B829FF", lightColor: "#7E22CE", boldLightColor: "#6B00D7" }
+      { icon: "󰫢", glyphScale: 1.06, dx: -0.24, alchemyKind: "aether", name: "Aether", color: "#C084FC", boldColor: "#B829FF", lightColor: "#7E22CE", boldLightColor: "#6B00D7" }
     ], "elements"),
     alchemy: root.indexed([
       { icon: "🜂", glyphScale: 1.0,  alchemyKind: "fire",   name: "Fire",   color: "#FF6B35", boldColor: "#FF3B00", lightColor: "#D93800", boldLightColor: "#C22800" },
@@ -1223,6 +1223,7 @@ BarWidget {
     return {
       icon: raw.icon,
       glyphScale: raw.glyphScale,
+      dx: raw.dx || 0,   // optical correction: some glyphs sit off-center in their font box
       alchemyKind: raw.alchemyKind,
       ink: Boolean(raw.ink),
       k: raw.k,
@@ -1540,6 +1541,7 @@ BarWidget {
           font.family: root.glyphFont(root.iconStyle)
           font.weight: wsBtn.isCjk ? Font.DemiBold : Font.Normal
           font.pixelSize: Math.round(root.uniformIconSize * wsBtn.element.glyphScale)
+          anchors.horizontalCenterOffset: Math.round(font.pixelSize * wsBtn.element.dx * 2) / 2
           renderType: Text.CurveRendering
           horizontalAlignment: Text.AlignHCenter
           verticalAlignment: Text.AlignVCenter
@@ -1712,6 +1714,7 @@ BarWidget {
             font.weight: (root.iconStyle === "godai" || root.iconStyle === "wuxing")
               ? Font.DemiBold : Font.Normal
             font.pixelSize: Math.round(root.uniformIconSize * previewPopup.element.glyphScale)
+            anchors.horizontalCenterOffset: Math.round(font.pixelSize * previewPopup.element.dx * 2) / 2
             renderType: Text.CurveRendering
           }
 
@@ -2086,6 +2089,7 @@ BarWidget {
                     font.weight: (choiceBtn.choiceKey === "godai" || choiceBtn.choiceKey === "wuxing")
                       ? Font.DemiBold : Font.Normal
                     font.pixelSize: Math.round(root.uniformIconSize * modelData.glyphScale)
+                    anchors.horizontalCenterOffset: Math.round(font.pixelSize * (modelData.dx || 0) * 2) / 2
                     renderType: Text.CurveRendering
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
